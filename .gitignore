@@ -1,0 +1,27 @@
+# Maven
+backend-java/target/
+backend-java/data/
+
+# Node
+node_modules/
+frontend-vue/node_modules/
+frontend-vue/dist/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.log
+*.db
+
+# Java
+*.class
+*.jar
+!gradle-wrapper.jar
