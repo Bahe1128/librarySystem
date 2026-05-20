@@ -1,9 +1,13 @@
 <template>
   <div id="app-wrapper">
     <Navbar />
-    <div class="main-container">
-      <router-view />
-    </div>
+    <main class="main-container">
+      <router-view v-slot="{ Component }">
+        <transition name="page" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
+    </main>
   </div>
 </template>
 
@@ -12,16 +16,25 @@ import Navbar from './components/Navbar.vue'
 </script>
 
 <style>
-body {
-  margin: 0;
-  padding: 0;
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  background-color: #f5f7fa;
-}
 .main-container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 20px;
-  min-height: calc(100vh - 60px);
+  padding: 32px 24px 64px;
+  min-height: calc(100vh - 64px);
+}
+
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 </style>

@@ -1,24 +1,47 @@
 <template>
-  <el-menu mode="horizontal" :ellipsis="false" class="navbar">
-    <el-menu-item index="0" class="brand">
-      <router-link to="/"><el-icon><Reading /></el-icon> 图书管理系统</router-link>
-    </el-menu-item>
-    <div class="flex-grow" />
-    <el-menu-item index="1"><router-link to="/">首页</router-link></el-menu-item>
-    <el-menu-item index="2"><router-link to="/books">图书列表</router-link></el-menu-item>
-    <el-menu-item index="3" v-if="auth.isLoggedIn"><router-link to="/borrow-records">借阅记录</router-link></el-menu-item>
-    <el-menu-item index="4" v-if="auth.user?.role === 'admin'"><router-link to="/admin">后台管理</router-link></el-menu-item>
-    <el-sub-menu index="5" v-if="auth.isLoggedIn">
-      <template #title>
-        <el-icon><User /></el-icon> {{ auth.user?.username }}
-      </template>
-      <el-menu-item @click="auth.logout()">退出登录</el-menu-item>
-    </el-sub-menu>
-    <template v-else>
-      <el-menu-item index="6"><router-link to="/login">登录</router-link></el-menu-item>
-      <el-menu-item index="7"><router-link to="/register">注册</router-link></el-menu-item>
-    </template>
-  </el-menu>
+  <header class="navbar">
+    <div class="navbar-inner">
+      <router-link to="/" class="brand">
+        <span class="brand-icon">
+          <el-icon :size="22"><Reading /></el-icon>
+        </span>
+        <span class="brand-text">图书管理系统</span>
+      </router-link>
+
+      <nav class="nav-links">
+        <router-link to="/" class="nav-link" active-class="active" exact>首页</router-link>
+        <router-link to="/books" class="nav-link" active-class="active">图书列表</router-link>
+        <router-link v-if="auth.isLoggedIn" to="/borrow-records" class="nav-link" active-class="active">借阅记录</router-link>
+        <router-link v-if="auth.user?.role === 'admin'" to="/admin" class="nav-link" active-class="active">后台管理</router-link>
+      </nav>
+
+      <div class="nav-actions">
+        <template v-if="auth.isLoggedIn">
+          <div class="user-menu">
+            <el-dropdown trigger="click" placement="bottom-end">
+              <button class="user-trigger">
+                <span class="avatar">{{ auth.user?.username?.charAt(0)?.toUpperCase() }}</span>
+                <span class="username">{{ auth.user?.username }}</span>
+                <el-icon :size="14"><ArrowDown /></el-icon>
+              </button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="auth.logout()">
+                    <el-icon><SwitchButton /></el-icon>
+                    退出登录
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
+        </template>
+        <template v-else>
+          <router-link to="/login" class="btn btn-ghost">登录</router-link>
+          <router-link to="/register" class="btn btn-primary">注册</router-link>
+        </template>
+      </div>
+    </div>
+  </header>
 </template>
 
 <script setup>
@@ -28,20 +51,160 @@ const auth = useAuthStore()
 
 <style scoped>
 .navbar {
-  padding: 0 20px;
-  border-bottom: 1px solid #e4e7ed;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--color-border);
 }
-.brand a {
-  font-size: 18px;
-  font-weight: bold;
-  color: #409eff;
+
+.navbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 24px;
+  gap: 32px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   text-decoration: none;
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 17px;
+  flex-shrink: 0;
 }
-.flex-grow {
-  flex-grow: 1;
+
+.brand-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
 }
-.el-menu-item a {
+
+.brand-text {
+  letter-spacing: -0.01em;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.nav-link {
+  padding: 8px 14px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 500;
   text-decoration: none;
-  color: inherit;
+  transition: all var(--transition);
+}
+
+.nav-link:hover {
+  color: var(--color-text);
+  background: var(--color-border-light);
+}
+
+.nav-link.active {
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn {
+  padding: 8px 18px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  color: #fff;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.btn-ghost:hover {
+  background: var(--color-border-light);
+  color: var(--color-text);
+}
+
+.user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-bg);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+  transition: all var(--transition);
+}
+
+.user-trigger:hover {
+  background: var(--color-border-light);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.username {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .nav-links { display: none; }
 }
 </style>
