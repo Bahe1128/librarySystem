@@ -1,5 +1,8 @@
 package com.library.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.library.common.PageResult;
 import com.library.entity.Book;
 import com.library.entity.BorrowRecord;
 import com.library.entity.User;
@@ -48,13 +51,17 @@ public class BorrowServiceImpl implements BorrowService {
     }
 
     @Override
-    public List<BorrowRecord> findByUserId(Long userId) {
-        return borrowRecordMapper.findByUserIdWithBookInfo(userId);
+    public PageResult<BorrowRecord> findByUserId(Long userId, int page, int pageSize) {
+        Page<BorrowRecord> p = new Page<>(page, pageSize);
+        Page<BorrowRecord> result = borrowRecordMapper.findByUserIdWithBookInfo(p, userId);
+        return new PageResult<>(result.getRecords(), result.getTotal(), result.getCurrent(), result.getSize());
     }
 
     @Override
-    public List<BorrowRecord> findAll() {
-        return borrowRecordMapper.findAllWithBookInfo();
+    public PageResult<BorrowRecord> findAll(int page, int pageSize) {
+        Page<BorrowRecord> p = new Page<>(page, pageSize);
+        Page<BorrowRecord> result = borrowRecordMapper.findAllWithBookInfo(p);
+        return new PageResult<>(result.getRecords(), result.getTotal(), result.getCurrent(), result.getSize());
     }
 
     @Override
@@ -81,17 +88,14 @@ public class BorrowServiceImpl implements BorrowService {
         Long totalBooks = bookMapper.selectCount(null);
         stats.put("totalBooks", totalBooks);
 
-        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<Book> availableWrapper =
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+        LambdaQueryWrapper<Book> availableWrapper = new LambdaQueryWrapper<>();
         availableWrapper.gt(Book::getAvailableCopies, 0);
         stats.put("availableBooks", bookMapper.selectCount(availableWrapper));
 
-        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<User> userCountWrapper =
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+        LambdaQueryWrapper<User> userCountWrapper = new LambdaQueryWrapper<>();
         stats.put("totalUsers", userMapper.selectCount(userCountWrapper));
 
-        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<BorrowRecord> borrowedWrapper =
-                new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+        LambdaQueryWrapper<BorrowRecord> borrowedWrapper = new LambdaQueryWrapper<>();
         borrowedWrapper.eq(BorrowRecord::getStatus, "borrowed");
         stats.put("borrowedBooks", borrowRecordMapper.selectCount(borrowedWrapper));
 

@@ -72,6 +72,18 @@
       </div>
     </div>
 
+    <div class="pagination-wrapper" v-if="total > 0">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
+    </div>
+
     <div class="empty-state" v-if="!loading && books.length === 0">
       <el-icon :size="48" color="var(--color-text-tertiary)"><FolderOpened /></el-icon>
       <h3>暂无图书</h3>
@@ -81,7 +93,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { bookAPI, borrowAPI } from '../api'
 import { useAuthStore } from '../stores/auth'
@@ -91,12 +103,18 @@ const books = ref([])
 const keyword = ref('')
 const loading = ref(true)
 const borrowingId = ref(null)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 async function fetchBooks(searchKeyword) {
   loading.value = true
   try {
-    const res = searchKeyword ? await bookAPI.search(searchKeyword) : await bookAPI.getAll()
-    books.value = res.data
+    const res = searchKeyword
+      ? await bookAPI.search(searchKeyword, currentPage.value, pageSize.value)
+      : await bookAPI.getAll(currentPage.value, pageSize.value)
+    books.value = res.data.records
+    total.value = res.data.total
   } catch (_) {
     ElMessage.error('获取图书失败')
   } finally {
@@ -104,8 +122,10 @@ async function fetchBooks(searchKeyword) {
   }
 }
 
-function handleSearch() { fetchBooks(keyword.value) }
-function resetSearch() { keyword.value = ''; fetchBooks('') }
+function handleSearch() { currentPage.value = 1; fetchBooks(keyword.value) }
+function resetSearch() { keyword.value = ''; currentPage.value = 1; fetchBooks('') }
+function handlePageChange(page) { currentPage.value = page; fetchBooks(keyword.value) }
+function handleSizeChange(size) { pageSize.value = size; currentPage.value = 1; fetchBooks(keyword.value) }
 
 async function handleBorrow(bookId) {
   if (!auth.isLoggedIn) { ElMessage.warning('请先登录'); return }
@@ -329,6 +349,12 @@ onMounted(() => fetchBooks())
 .book-delete:hover { background: var(--color-danger-light); color: var(--color-danger); }
 
 /* Empty state */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
 .empty-state {
   text-align: center;
   padding: 80px 20px;

@@ -51,6 +51,18 @@
       </el-table>
     </div>
 
+    <div class="pagination-wrapper" v-if="total > 0">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
+    </div>
+
     <el-dialog
       v-model="dialogVisible"
       :title="editingId ? '编辑图书' : '添加图书'"
@@ -109,6 +121,9 @@ import { bookAPI } from '../api'
 
 const books = ref([])
 const loading = ref(true)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(10)
 const dialogVisible = ref(false)
 const submitting = ref(false)
 const editingId = ref(null)
@@ -130,14 +145,18 @@ const rules = {
 async function fetchBooks() {
   loading.value = true
   try {
-    const res = await bookAPI.getAll()
-    books.value = res.data
+    const res = await bookAPI.getAll(currentPage.value, pageSize.value)
+    books.value = res.data.records
+    total.value = res.data.total
   } catch (_) {
     ElMessage.error('获取图书失败')
   } finally {
     loading.value = false
   }
 }
+
+function handlePageChange(page) { currentPage.value = page; fetchBooks() }
+function handleSizeChange(size) { pageSize.value = size; currentPage.value = 1; fetchBooks() }
 
 function openDialog(book) {
   editingId.value = book ? book.id : null
@@ -274,6 +293,12 @@ onMounted(fetchBooks)
 }
 
 .action-btn.delete:hover { background: var(--color-danger); color: #fff; }
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
 
 /* Dialog buttons */
 .dialog-btn {

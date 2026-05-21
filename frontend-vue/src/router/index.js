@@ -6,6 +6,7 @@ import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import BorrowRecords from '../views/BorrowRecords.vue'
 import Admin from '../views/Admin.vue'
+import AdminAccounts from '../views/AdminAccounts.vue'
 
 const routes = [
   { path: '/', name: 'Home', component: Home },
@@ -22,6 +23,12 @@ const routes = [
     path: '/admin',
     name: 'Admin',
     component: Admin,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/admin/accounts',
+    name: 'AdminAccounts',
+    component: AdminAccounts,
     meta: { requiresAuth: true, requiresAdmin: true }
   }
 ]

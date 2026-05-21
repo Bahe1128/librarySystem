@@ -1,5 +1,6 @@
 package com.library.controller;
 
+import com.library.common.PageResult;
 import com.library.common.Result;
 import com.library.dto.BorrowRequest;
 import com.library.dto.ReturnRequest;
@@ -9,8 +10,6 @@ import com.library.service.BorrowService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/borrow")
@@ -34,12 +33,14 @@ public class BorrowController {
     }
 
     @GetMapping
-    public Result<List<BorrowRecord>> getRecords(@AuthenticationPrincipal UserPrincipal user) {
-        List<BorrowRecord> records;
+    public Result<PageResult<BorrowRecord>> getRecords(@AuthenticationPrincipal UserPrincipal user,
+                                                        @RequestParam(defaultValue = "1") int page,
+                                                        @RequestParam(defaultValue = "10") int pageSize) {
+        PageResult<BorrowRecord> records;
         if ("admin".equals(user.getRole())) {
-            records = borrowService.findAll();
+            records = borrowService.findAll(page, pageSize);
         } else {
-            records = borrowService.findByUserId(user.getId());
+            records = borrowService.findByUserId(user.getId(), page, pageSize);
         }
         return Result.success(records);
     }

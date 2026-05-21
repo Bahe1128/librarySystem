@@ -40,6 +40,7 @@ public class SecurityConfig {
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/api/borrow/**").authenticated()
                 .requestMatchers("/api/stats/**").authenticated()
+                .requestMatchers("/api/users/**").hasRole("admin")
                 .anyRequest().authenticated()
             )
             .headers(headers -> headers.frameOptions(frame -> frame.disable()))

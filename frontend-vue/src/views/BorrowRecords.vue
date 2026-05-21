@@ -3,7 +3,7 @@
     <div class="page-top">
       <div>
         <h2 class="page-title">借阅记录</h2>
-        <p class="page-desc">{{ isAdmin ? '查看所有用户的借阅和归还记录' : '查看你的借阅和归还记录' }}</p>
+        <p class="page-desc">{{ isAdmin ? '查看用户的借阅和归还记录' : '查看你的借阅和归还记录' }}</p>
       </div>
     </div>
 
@@ -59,6 +59,18 @@
       </el-table>
     </div>
 
+    <div class="pagination-wrapper" v-if="total > 0">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+      />
+    </div>
+
     <div class="empty-state" v-if="!loading && records.length === 0">
       <el-icon :size="48" color="var(--color-text-tertiary)"><FolderOpened /></el-icon>
       <h3>暂无借阅记录</h3>
@@ -77,6 +89,9 @@ const auth = useAuthStore()
 const records = ref([])
 const loading = ref(true)
 const returningId = ref(null)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(10)
 const isAdmin = computed(() => auth.user?.role === 'admin')
 
 function formatDate(date) {
@@ -87,14 +102,18 @@ function formatDate(date) {
 async function fetchRecords() {
   loading.value = true
   try {
-    const res = await borrowAPI.getRecords()
-    records.value = res.data
+    const res = await borrowAPI.getRecords(currentPage.value, pageSize.value)
+    records.value = res.data.records
+    total.value = res.data.total
   } catch (_) {
     ElMessage.error('获取记录失败')
   } finally {
     loading.value = false
   }
 }
+
+function handlePageChange(page) { currentPage.value = page; fetchRecords() }
+function handleSizeChange(size) { pageSize.value = size; currentPage.value = 1; fetchRecords() }
 
 async function handleReturn(id) {
   returningId.value = id
@@ -202,6 +221,12 @@ onMounted(fetchRecords)
 .return-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .no-action { color: var(--color-text-tertiary); font-size: 13px; }
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
 
 .empty-state {
   text-align: center;

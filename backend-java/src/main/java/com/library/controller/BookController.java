@@ -1,11 +1,10 @@
 package com.library.controller;
 
+import com.library.common.PageResult;
 import com.library.common.Result;
 import com.library.entity.Book;
 import com.library.service.BookService;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/books")
@@ -18,13 +17,16 @@ public class BookController {
     }
 
     @GetMapping
-    public Result<List<Book>> getAll() {
-        return Result.success(bookService.findAll());
+    public Result<PageResult<Book>> getAll(@RequestParam(defaultValue = "1") int page,
+                                           @RequestParam(defaultValue = "10") int pageSize) {
+        return Result.success(bookService.findAll(page, pageSize));
     }
 
     @GetMapping("/search")
-    public Result<List<Book>> search(@RequestParam String keyword) {
-        return Result.success(bookService.search(keyword));
+    public Result<PageResult<Book>> search(@RequestParam String keyword,
+                                           @RequestParam(defaultValue = "1") int page,
+                                           @RequestParam(defaultValue = "10") int pageSize) {
+        return Result.success(bookService.search(keyword, page, pageSize));
     }
 
     @GetMapping("/{id}")

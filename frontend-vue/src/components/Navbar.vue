@@ -13,6 +13,7 @@
         <router-link to="/books" class="nav-link" active-class="active">图书列表</router-link>
         <router-link v-if="auth.isLoggedIn" to="/borrow-records" class="nav-link" active-class="active">借阅记录</router-link>
         <router-link v-if="auth.user?.role === 'admin'" to="/admin" class="nav-link" active-class="active">后台管理</router-link>
+        <router-link v-if="auth.user?.role === 'admin'" to="/admin/accounts" class="nav-link" active-class="active">账号管理</router-link>
       </nav>
 
       <div class="nav-actions">

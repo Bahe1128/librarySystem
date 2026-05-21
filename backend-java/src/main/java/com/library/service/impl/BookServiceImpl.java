@@ -1,12 +1,12 @@
 package com.library.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.library.common.PageResult;
 import com.library.entity.Book;
 import com.library.mapper.BookMapper;
 import com.library.service.BookService;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class BookServiceImpl implements BookService {
@@ -18,8 +18,10 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public List<Book> findAll() {
-        return bookMapper.selectList(null);
+    public PageResult<Book> findAll(int page, int pageSize) {
+        Page<Book> p = new Page<>(page, pageSize);
+        Page<Book> result = bookMapper.selectPage(p, null);
+        return new PageResult<>(result.getRecords(), result.getTotal(), result.getCurrent(), result.getSize());
     }
 
     @Override
@@ -28,13 +30,15 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public List<Book> search(String keyword) {
+    public PageResult<Book> search(String keyword, int page, int pageSize) {
         LambdaQueryWrapper<Book> wrapper = new LambdaQueryWrapper<>();
         wrapper.like(Book::getTitle, keyword)
                .or().like(Book::getAuthor, keyword)
                .or().like(Book::getIsbn, keyword)
                .or().like(Book::getCategory, keyword);
-        return bookMapper.selectList(wrapper);
+        Page<Book> p = new Page<>(page, pageSize);
+        Page<Book> result = bookMapper.selectPage(p, wrapper);
+        return new PageResult<>(result.getRecords(), result.getTotal(), result.getCurrent(), result.getSize());
     }
 
     @Override

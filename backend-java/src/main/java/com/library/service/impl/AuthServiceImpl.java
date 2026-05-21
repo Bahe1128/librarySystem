@@ -41,6 +41,10 @@ public class AuthServiceImpl implements AuthService {
         userMap.put("id", user.getId());
         userMap.put("username", user.getUsername());
         userMap.put("role", user.getRole());
+        userMap.put("name", user.getName());
+        userMap.put("idCard", user.getIdCard());
+        userMap.put("phone", user.getPhone());
+        userMap.put("email", user.getEmail());
 
         return new LoginResponse(token, userMap);
     }
@@ -58,6 +62,10 @@ public class AuthServiceImpl implements AuthService {
         User user = new User();
         user.setUsername(request.getUsername());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setName(request.getName());
+        user.setIdCard(request.getIdCard());
+        user.setPhone(request.getPhone());
+        user.setEmail(request.getEmail());
         user.setRole("user");
         userMapper.insert(user);
         return user;
