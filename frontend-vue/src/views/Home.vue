@@ -65,13 +65,18 @@
 </template>
 
 <script setup>
+// 首页 - 应用的欢迎页和功能展示
+// 展示统计数据（馆藏数量、借阅数量、注册用户数）和核心功能介绍
+
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { statsAPI } from '../api'
 
 const auth = useAuthStore()
+// 统计数据对象（totalBooks, activeBorrows, totalUsers）
 const stats = ref(null)
 
+// 核心功能列表：用于渲染功能介绍卡片
 const features = [
   { icon: 'Reading', title: '图书管理', desc: '添加、编辑、删除和搜索图书信息，支持多种查询方式', color: 'violet' },
   { icon: 'Tickets', title: '借阅管理', desc: '一键借阅与归还，完整记录每本书的流转历史', color: 'emerald' },
@@ -81,12 +86,15 @@ const features = [
   { icon: 'Setting', title: '易于扩展', desc: 'Spring Boot + Vue 3 技术栈，维护方便', color: 'slate' },
 ]
 
+// 组件挂载后获取统计数据
+// 注意：即使获取失败也不影响页面正常展示（统计数据为可选功能）
 onMounted(async () => {
   try {
     const res = await statsAPI.getStats()
+    // 将返回的统计数据赋值
     stats.value = res.data
   } catch (_) {
-    // stats optional
+    // stats 数据获取失败时静默处理，不影响页面渲染
   }
 })
 </script>

@@ -93,26 +93,39 @@
 </template>
 
 <script setup>
+// 图书管理页 - 浏览、搜索、借阅和删除图书
+// 支持分页展示，搜索功能支持书名/作者/ISBN/分类多维度查询
+// 管理员可以删除图书，普通用户可以借阅
+
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { bookAPI, borrowAPI } from '../api'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
+// 图书列表数据
 const books = ref([])
+// 搜索关键词
 const keyword = ref('')
+// 表格加载状态
 const loading = ref(true)
+// 正在借阅的图书 ID（用于显示该行的 loading 状态）
 const borrowingId = ref(null)
+// 总数据条数（用于分页）
 const total = ref(0)
+// 当前页码和每页条数
 const currentPage = ref(1)
 const pageSize = ref(10)
 
+// 获取图书列表：根据是否有搜索关键词，调用不同的 API
+// searchKeyword 为空时获取全部，不为空时执行搜索
 async function fetchBooks(searchKeyword) {
   loading.value = true
   try {
     const res = searchKeyword
       ? await bookAPI.search(searchKeyword, currentPage.value, pageSize.value)
       : await bookAPI.getAll(currentPage.value, pageSize.value)
+    // 分页响应结构：records 为当前页数据，total 为总条数
     books.value = res.data.records
     total.value = res.data.total
   } catch (_) {
@@ -122,36 +135,50 @@ async function fetchBooks(searchKeyword) {
   }
 }
 
+// 搜索：重置到第1页后执行搜索
 function handleSearch() { currentPage.value = 1; fetchBooks(keyword.value) }
+// 重置搜索：清空关键词，返回全部图书列表
 function resetSearch() { keyword.value = ''; currentPage.value = 1; fetchBooks('') }
+// 页码变化时重新获取数据
 function handlePageChange(page) { currentPage.value = page; fetchBooks(keyword.value) }
+// 每页条数变化时重置到第1页
 function handleSizeChange(size) { pageSize.value = size; currentPage.value = 1; fetchBooks(keyword.value) }
 
+// 借阅图书：需登录后才能操作
 async function handleBorrow(bookId) {
+  // 检查登录状态
   if (!auth.isLoggedIn) { ElMessage.warning('请先登录'); return }
+  // 记录正在借阅的图书 ID，用于 UI 反馈
   borrowingId.value = bookId
   try {
     await borrowAPI.borrow(bookId)
     ElMessage.success('借阅成功')
+    // 借阅成功后刷新列表，更新库存显示
     fetchBooks(keyword.value)
   } catch (e) {
     ElMessage.error(e.message || '借阅失败')
   } finally {
+    // 清除 loading 状态
     borrowingId.value = null
   }
 }
 
+// 删除图书（仅管理员可见此按钮）
 async function handleDelete(id) {
   try {
+    // 弹出确认对话框
     await ElMessageBox.confirm('确定要删除此图书吗？')
     await bookAPI.delete(id)
     ElMessage.success('删除成功')
+    // 删除后刷新列表
     fetchBooks(keyword.value)
   } catch (e) {
+    // 如果是用户取消操作，不显示错误提示
     if (e !== 'cancel') ElMessage.error('删除失败')
   }
 }
 
+// 组件挂载后自动加载图书列表
 onMounted(() => fetchBooks())
 </script>
 

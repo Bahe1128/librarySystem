@@ -115,20 +115,33 @@
 </template>
 
 <script setup>
+// 管理员面板 - 图书的增删改查管理
+// 仅管理员可访问（由路由导航守卫控制）
+// 功能：添加/编辑/删除图书，以表格形式展示所有图书信息
+
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { bookAPI } from '../api'
 
+// 图书列表数据
 const books = ref([])
+// 表格加载状态
 const loading = ref(true)
+// 总数据条数（用于分页）
 const total = ref(0)
+// 当前页码和每页条数
 const currentPage = ref(1)
 const pageSize = ref(10)
+// 对话框是否可见（新增/编辑图书的弹窗）
 const dialogVisible = ref(false)
+// 表单提交状态
 const submitting = ref(false)
+// 正在编辑的图书 ID（null 表示新增模式，有值表示编辑模式）
 const editingId = ref(null)
+// 表单组件的引用（用于表单验证）
 const formRef = ref(null)
 
+// 图书表单数据模型（使用 reactive 实现与表单的双向绑定）
 const form = reactive({
   title: '',
   author: '',
@@ -137,11 +150,13 @@ const form = reactive({
   totalCopies: 1
 })
 
+// 表单验证规则
 const rules = {
   title: [{ required: true, message: '请输入书名', trigger: 'blur' }],
   author: [{ required: true, message: '请输入作者', trigger: 'blur' }]
 }
 
+// 获取图书列表（分页）
 async function fetchBooks() {
   loading.value = true
   try {
@@ -155,12 +170,18 @@ async function fetchBooks() {
   }
 }
 
+// 分页处理：页码变化
 function handlePageChange(page) { currentPage.value = page; fetchBooks() }
+// 分页处理：每页条数变化时重置到第1页
 function handleSizeChange(size) { pageSize.value = size; currentPage.value = 1; fetchBooks() }
 
+// 打开新增/编辑对话框
+// book 为 null 时是新增模式，传入图书对象时是编辑模式
 function openDialog(book) {
+  // 设置编辑 ID
   editingId.value = book ? book.id : null
   if (book) {
+    // 编辑模式：将现有图书数据填充到表单
     Object.assign(form, {
       title: book.title,
       author: book.author,
@@ -169,24 +190,31 @@ function openDialog(book) {
       totalCopies: book.totalCopies
     })
   } else {
+    // 新增模式：重置表单为初始值
     Object.assign(form, { title: '', author: '', isbn: '', category: '', totalCopies: 1 })
   }
+  // 显示对话框
   dialogVisible.value = true
 }
 
+// 处理表单提交（新增或更新图书）
 async function handleSubmit() {
+  // 执行 Element Plus 表单验证
   const valid = await formRef.value.validate().catch(() => false)
   if (!valid) return
   submitting.value = true
   try {
     const payload = { ...form }
     if (editingId.value) {
+      // 有编辑 ID → 执行更新操作
       await bookAPI.update(editingId.value, payload)
       ElMessage.success('更新成功')
     } else {
+      // 无编辑 ID → 执行新增操作
       await bookAPI.create(payload)
       ElMessage.success('添加成功')
     }
+    // 关闭对话框并刷新列表
     dialogVisible.value = false
     fetchBooks()
   } catch (e) {
@@ -196,17 +224,22 @@ async function handleSubmit() {
   }
 }
 
+// 删除图书
 async function handleDelete(id) {
   try {
+    // 弹出确认对话框
     await ElMessageBox.confirm('确定要删除此图书吗？', '确认删除', { confirmButtonText: '删除', cancelButtonText: '取消' })
     await bookAPI.delete(id)
     ElMessage.success('删除成功')
+    // 删除后刷新列表
     fetchBooks()
   } catch (e) {
+    // 用户取消操作时不显示错误提示
     if (e !== 'cancel') ElMessage.error('删除失败')
   }
 }
 
+// 组件挂载后自动加载图书列表
 onMounted(fetchBooks)
 </script>
 

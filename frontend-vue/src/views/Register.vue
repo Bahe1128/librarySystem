@@ -56,6 +56,9 @@
 </template>
 
 <script setup>
+// 注册页 - 新用户注册入口
+// 包含用户名、密码和确认密码三个字段，注册成功后跳转到登录页
+
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -63,27 +66,35 @@ import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+// 加载状态：控制注册按钮的 loading 动画和禁用
 const loading = ref(false)
 
+// 注册表单数据：包含确认密码字段用于二次验证
 const form = reactive({ username: '', password: '', confirmPassword: '' })
 
+// 处理注册提交
 async function handleRegister() {
+  // 验证所有字段是否填写
   if (!form.username || !form.password || !form.confirmPassword) {
     ElMessage.warning('请填写所有字段')
     return
   }
+  // 密码长度验证：至少 6 位
   if (form.password.length < 6) {
     ElMessage.warning('密码至少6位')
     return
   }
+  // 两次密码一致性验证
   if (form.password !== form.confirmPassword) {
     ElMessage.warning('两次密码不一致')
     return
   }
   loading.value = true
   try {
+    // 调用注册 API（只传用户名和密码，确认密码仅用于前端验证）
     await auth.register(form.username, form.password)
     ElMessage.success('注册成功，请登录')
+    // 注册成功后跳转到登录页
     router.push('/login')
   } catch (e) {
     ElMessage.error(e.message || '注册失败')

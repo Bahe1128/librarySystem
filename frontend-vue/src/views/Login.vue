@@ -45,6 +45,9 @@
 </template>
 
 <script setup>
+// 登录页 - 用户认证入口
+// 用户输入用户名和密码后，调用后端 API 登录，成功后跳转首页
+
 import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
@@ -52,23 +55,31 @@ import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
+// 加载状态：用于控制登录按钮的 loading 动画和禁用
 const loading = ref(false)
 
+// 登录表单数据（使用 reactive 实现双向绑定）
 const form = reactive({ username: '', password: '' })
 
+// 处理登录提交
 async function handleLogin() {
+  // 前端表单验证：确保必填字段不为空
   if (!form.username || !form.password) {
     ElMessage.warning('请填写用户名和密码')
     return
   }
   loading.value = true
   try {
+    // 调用 Auth Store 的 login 方法，发起后端登录请求
+    // 内部会自动保存 Token 和用户信息到 Store 和 localStorage
     await auth.login(form.username, form.password)
     ElMessage.success('登录成功')
+    // 登录成功后跳转到首页
     router.push('/')
   } catch (e) {
     ElMessage.error(e.message || '登录失败')
   } finally {
+    // 无论成功或失败，最终都要解除 loading 状态
     loading.value = false
   }
 }

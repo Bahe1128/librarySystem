@@ -46,6 +46,11 @@
 </template>
 
 <script setup>
+// 导航栏组件 - 应用顶部的全局导航
+// 根据用户登录状态和角色动态显示不同的导航菜单项
+// 登录后显示用户头像和退出登录按钮，未登录显示登录/注册按钮
+
+// 引入认证 Store 获取用户状态
 import { useAuthStore } from '../stores/auth'
 const auth = useAuthStore()
 </script>

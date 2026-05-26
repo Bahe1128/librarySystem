@@ -80,25 +80,41 @@
 </template>
 
 <script setup>
+// 借阅记录页 - 展示用户的借阅和归还历史
+// 普通用户只能看到自己的记录，管理员可以看到所有用户的记录
+// 支持分页展示和归还操作
+
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { borrowAPI } from '../api'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
+// 借阅记录列表
 const records = ref([])
+// 表格加载状态
 const loading = ref(true)
+// 正在执行归还操作的记录 ID（用于 UI loading 反馈）
 const returningId = ref(null)
+// 总数据条数
 const total = ref(0)
+// 当前页码和每页条数
 const currentPage = ref(1)
 const pageSize = ref(10)
+
+// 计算属性：判断当前用户是否为管理员
+// 管理员可以看到所有用户的借阅记录，并在表格中显示"借阅人"列
 const isAdmin = computed(() => auth.user?.role === 'admin')
 
+// 格式化日期为中文格式（年-月-日）
 function formatDate(date) {
   if (!date) return '-'
   return new Date(date).toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
 }
 
+// 获取借阅记录列表（分页）
+// 后端会根据当前登录用户的角色自动筛选数据
+// 管理员获取全部记录，普通用户只获取自己的记录
 async function fetchRecords() {
   loading.value = true
   try {
@@ -112,14 +128,20 @@ async function fetchRecords() {
   }
 }
 
+// 页码变化
 function handlePageChange(page) { currentPage.value = page; fetchRecords() }
+// 每页条数变化时重置到第1页
 function handleSizeChange(size) { pageSize.value = size; currentPage.value = 1; fetchRecords() }
 
+// 归还图书操作
 async function handleReturn(id) {
+  // 记录正在归还的记录 ID
   returningId.value = id
   try {
+    // 调用归还 API
     await borrowAPI.returnBook(id)
     ElMessage.success('归还成功')
+    // 归还成功后刷新列表，更新状态显示
     fetchRecords()
   } catch (e) {
     ElMessage.error(e.message || '归还失败')
@@ -128,6 +150,7 @@ async function handleReturn(id) {
   }
 }
 
+// 组件挂载后自动加载借阅记录
 onMounted(fetchRecords)
 </script>
 
