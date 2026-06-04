@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.*;
  * 所有以 /api/books 开头的请求在 SecurityConfig 中被设置为无需认证即可访问。
  * </p>
  */
-@RestController
-@RequestMapping("/api/books")
+@RestController //这是接口类，Spring 会自动将返回值转换为 JSON 格式响应给客户端
+@RequestMapping("/api/books") //定义基础路径，所有方法的路径都会以 /api/books 开头
 public class BookController {
 
     /** 图书服务（封装图书相关的业务逻辑） */
