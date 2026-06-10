@@ -217,7 +217,7 @@ public class DataInitializer implements CommandLineRunner {
 
     /**
      * 为指定用户批量创建借阅记录
-     * 每本书的借阅日期随机在过去 1~30 天之间
+     * 每本书的借阅日期随机在过去 1~30 天之间，应还日期为借阅日期 + 14 天
      *
      * @param userId 用户 ID
      * @param books  要借阅的图书列表
@@ -229,7 +229,9 @@ public class DataInitializer implements CommandLineRunner {
             BorrowRecord record = new BorrowRecord();
             record.setUserId(userId);
             record.setBookId(book.getId());
-            record.setBorrowDate(now.minusDays(RANDOM.nextInt(30) + 1)); // 随机过去 1~30 天
+            LocalDateTime borrowDate = now.minusDays(RANDOM.nextInt(30) + 1);
+            record.setBorrowDate(borrowDate);
+            record.setDueDate(borrowDate.plusDays(14)); // 应还日期 = 借阅日期 + 14 天
             record.setStatus("borrowed");
             borrowRecordMapper.insert(record);
 

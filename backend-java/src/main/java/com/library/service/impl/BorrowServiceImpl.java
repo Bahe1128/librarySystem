@@ -10,6 +10,7 @@ import com.library.mapper.BookMapper;
 import com.library.mapper.BorrowRecordMapper;
 import com.library.mapper.UserMapper;
 import com.library.service.BorrowService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,23 +20,30 @@ import java.util.*;
 /**
  * 借阅服务实现类
  * <p>
- * 实现借阅和归还的核心业务逻辑。借阅和归还操作均使用 @Transactional 注解
- * 保证数据一致性：如果借阅记录创建成功但库存扣减失败，事务会自动回滚。
- * </p>
- * <p>
- * 还实现了系统统计（图书总数、用户总数、在借数量）和借阅趋势分析功能。
+ * 实现借阅和归还的核心业务逻辑，包含以下安全/业务保障：
+ * <ul>
+ *   <li><b>悲观行锁</b>：借书时 SELECT ... FOR UPDATE 锁定图书记录，防止并发超卖</li>
+ *   <li><b>借阅上限</b>：每位用户最多同时借阅指定册数（可配置）</li>
+ *   <li><b>应还日期</b>：借书时自动计算应还日期，逾期未还将标记为逾期</li>
+ * </ul>
+ * 借阅和归还操作均使用 @Transactional 保证数据一致性。
  * </p>
  */
 @Service
 public class BorrowServiceImpl implements BorrowService {
 
+    /** 借阅期限（天数），从 application.yml 注入 */
+    @Value("${library.borrow-duration-days}")
+    private int borrowDurationDays;
+
+    /** 每位用户最多同时借阅册数 */
+    @Value("${library.max-borrow-count}")
+    private int maxBorrowCount;
+
     private final BorrowRecordMapper borrowRecordMapper;
     private final BookMapper bookMapper;
     private final UserMapper userMapper;
 
-    /**
-     * 构造方法注入所需的 Mapper
-     */
     public BorrowServiceImpl(BorrowRecordMapper borrowRecordMapper, BookMapper bookMapper, UserMapper userMapper) {
         this.borrowRecordMapper = borrowRecordMapper;
         this.bookMapper = bookMapper;
@@ -45,48 +53,50 @@ public class BorrowServiceImpl implements BorrowService {
     /**
      * 借阅图书
      * <p>
-     * 使用 @Transactional 确保两步操作（创建借阅记录 + 扣减库存）的原子性：
-     * 如果其中任何一步失败，整个操作回滚，不会出现借阅记录已创建但库存没扣的情况。
+     * 执行流程：① 检查用户借阅数量上限 → ② 悲观锁锁定图书记录 →
+     * ③ 校验库存 → ④ 创建借阅记录（含应还日期） → ⑤ 扣减库存。
+     * 行锁在事务提交后自动释放，阻塞并发请求，防止超卖。
      * </p>
      *
      * @param userId 借阅用户 ID
      * @param bookId 图书 ID
      * @return 创建的借阅记录
-     * @throws RuntimeException 图书不存在或无可用副本
+     * @throws RuntimeException 超过借阅上限 / 图书不存在 / 无可用副本
      */
     @Override
-    @Transactional // 声明事务：该方法内的数据库操作要么全部成功，要么全部回滚
+    @Transactional
     public BorrowRecord borrow(Long userId, Long bookId) {
-        // 检查图书是否存在且有可用副本
-        Book book = bookMapper.selectById(bookId);
+        // ① 借阅数量上限检查：统计该用户当前在借的图书数量
+        LambdaQueryWrapper<BorrowRecord> activeBorrows = new LambdaQueryWrapper<>();
+        activeBorrows.eq(BorrowRecord::getUserId, userId)
+                      .eq(BorrowRecord::getStatus, "borrowed");
+        long activeCount = borrowRecordMapper.selectCount(activeBorrows);
+        if (activeCount >= maxBorrowCount) {
+            throw new RuntimeException("借阅已达上限（最多 " + maxBorrowCount + " 本），请先归还后再借");
+        }
+
+        // ② 悲观锁锁定图书记录 —— 阻塞其他事务对该行的修改，防止并发超卖
+        Book book = bookMapper.selectByIdForUpdate(bookId);
         if (book == null || book.getAvailableCopies() <= 0) {
             throw new RuntimeException("图书不存在或无可用副本");
         }
 
-        // 创建借阅记录
+        // ③ 创建借阅记录，自动计算应还日期
         BorrowRecord record = new BorrowRecord();
         record.setUserId(userId);
         record.setBookId(bookId);
         record.setStatus("borrowed");
         record.setBorrowDate(LocalDateTime.now());
+        record.setDueDate(LocalDateTime.now().plusDays(borrowDurationDays)); // 应还日期 = 借阅日期 + 借阅期限
         borrowRecordMapper.insert(record);
 
-        // 扣减图书可用库存
+        // ④ 扣减图书可用库存
         book.setAvailableCopies(book.getAvailableCopies() - 1);
         bookMapper.updateById(book);
 
         return record;
     }
 
-    /**
-     * 按用户 ID 分页查询借阅记录
-     * 通过联表查询同时返回图书名、作者、用户名（普通用户只查看自己的记录）
-     *
-     * @param userId   用户 ID
-     * @param page     页码
-     * @param pageSize 每页条数
-     * @return 带图书和用户信息的借阅记录分页结果
-     */
     @Override
     public PageResult<BorrowRecord> findByUserId(Long userId, int page, int pageSize) {
         Page<BorrowRecord> p = new Page<>(page, pageSize);
@@ -94,13 +104,6 @@ public class BorrowServiceImpl implements BorrowService {
         return new PageResult<>(result.getRecords(), result.getTotal(), result.getCurrent(), result.getSize());
     }
 
-    /**
-     * 分页查询所有借阅记录（管理员使用）
-     *
-     * @param page     页码
-     * @param pageSize 每页条数
-     * @return 所有用户的借阅记录分页结果
-     */
     @Override
     public PageResult<BorrowRecord> findAll(int page, int pageSize) {
         Page<BorrowRecord> p = new Page<>(page, pageSize);
@@ -111,89 +114,75 @@ public class BorrowServiceImpl implements BorrowService {
     /**
      * 归还图书
      * <p>
-     * 使用 @Transactional 确保两步操作（更新记录状态 + 恢复库存）的原子性。
+     * 执行流程：① 校验借阅记录状态 → ② 更新记录为已归还（含归还日期） →
+     * ③ 恢复库存 → ④ 返回结果消息（含是否逾期）。
      * </p>
      *
      * @param recordId 借阅记录 ID
+     * @return 归还结果描述，如包含逾期信息
      * @throws RuntimeException 借阅记录不存在或已归还
      */
     @Override
     @Transactional
-    public void returnBook(Long recordId) {
-        // 查找借阅记录并校验状态
+    public String returnBook(Long recordId) {
         BorrowRecord record = borrowRecordMapper.selectById(recordId);
         if (record == null || !"borrowed".equals(record.getStatus())) {
             throw new RuntimeException("借阅记录不存在或已归还");
         }
 
-        // 更新记录为已归还
+        LocalDateTime now = LocalDateTime.now();
+        boolean isOverdue = record.getDueDate() != null && record.getDueDate().isBefore(now);
+
         record.setStatus("returned");
-        record.setReturnDate(LocalDateTime.now());
+        record.setReturnDate(now);
         borrowRecordMapper.updateById(record);
 
-        // 恢复图书可用库存
         Book book = bookMapper.selectById(record.getBookId());
         book.setAvailableCopies(book.getAvailableCopies() + 1);
         bookMapper.updateById(book);
+
+        return isOverdue ? "归还成功（已逾期，请注意按时归还）" : "归还成功";
     }
 
-    /**
-     * 获取系统统计数据
-     * 统计图书总数、可借图书数、用户总数、在借图书数
-     *
-     * @return 包含统计数据的 Map
-     */
     @Override
     public Map<String, Object> getSystemStats() {
         Map<String, Object> stats = new HashMap<>();
 
-        // 图书总数
         Long totalBooks = bookMapper.selectCount(null);
         stats.put("totalBooks", totalBooks);
 
-        // 可借图书数（availableCopies > 0）
         LambdaQueryWrapper<Book> availableWrapper = new LambdaQueryWrapper<>();
-        availableWrapper.gt(Book::getAvailableCopies, 0); // gt = greater than，大于
+        availableWrapper.gt(Book::getAvailableCopies, 0);
         stats.put("availableBooks", bookMapper.selectCount(availableWrapper));
 
-        // 用户总数
         LambdaQueryWrapper<User> userCountWrapper = new LambdaQueryWrapper<>();
         stats.put("totalUsers", userMapper.selectCount(userCountWrapper));
 
-        // 在借图书数（status = 'borrowed'）
         LambdaQueryWrapper<BorrowRecord> borrowedWrapper = new LambdaQueryWrapper<>();
-        borrowedWrapper.eq(BorrowRecord::getStatus, "borrowed"); // eq = equal
+        borrowedWrapper.eq(BorrowRecord::getStatus, "borrowed");
         stats.put("borrowedBooks", borrowRecordMapper.selectCount(borrowedWrapper));
+
+        // 逾期借阅数量：状态为 borrowed 且 due_date < 当前时间
+        LambdaQueryWrapper<BorrowRecord> overdueWrapper = new LambdaQueryWrapper<>();
+        overdueWrapper.eq(BorrowRecord::getStatus, "borrowed")
+                      .lt(BorrowRecord::getDueDate, LocalDateTime.now());
+        stats.put("overdueBooks", borrowRecordMapper.selectCount(overdueWrapper));
 
         return stats;
     }
 
-    /**
-     * 获取借阅趋势数据
-     * <p>
-     * 遍历所有借阅记录，按月聚合统计借阅量，
-     * 前端可用于绘制折线图展示借阅趋势。
-     * </p>
-     *
-     * @return 按月排序的统计数据列表，每条包含 month（月份）和 count（借阅量）
-     */
     @Override
     public List<Map<String, Object>> getBorrowTrends() {
         List<BorrowRecord> allRecords = borrowRecordMapper.selectList(null);
-        // LinkedHashMap 保持插入顺序，便于后续排序
         Map<String, Long> trendMap = new LinkedHashMap<>();
 
-        // 按月统计借阅量
         for (BorrowRecord record : allRecords) {
             if (record.getBorrowDate() != null) {
-                // 截取日期前 7 位（如 "2024-01"）作为月份标识
                 String month = record.getBorrowDate().toString().substring(0, 7);
-                // merge 方法：如果 key 不存在则置为 1，存在则累加
                 trendMap.merge(month, 1L, Long::sum);
             }
         }
 
-        // 将 Map 转换为前端需要的 List<Map> 格式
         List<Map<String, Object>> trends = new ArrayList<>();
         trendMap.forEach((month, count) -> {
             Map<String, Object> item = new HashMap<>();
@@ -201,7 +190,6 @@ public class BorrowServiceImpl implements BorrowService {
             item.put("count", count);
             trends.add(item);
         });
-        // 按月份升序排序
         trends.sort((a, b) -> ((String) a.get("month")).compareTo((String) b.get("month")));
 
         return trends;

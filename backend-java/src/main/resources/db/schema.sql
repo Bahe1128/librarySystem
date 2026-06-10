@@ -31,9 +31,12 @@ CREATE TABLE IF NOT EXISTS borrow_records (
     user_id BIGINT,
     book_id BIGINT,
     borrow_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    due_date TIMESTAMP,
     return_date TIMESTAMP,
     status VARCHAR(50) DEFAULT 'borrowed',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (book_id) REFERENCES books(id)
 );
+
+ALTER TABLE borrow_records ADD COLUMN IF NOT EXISTS due_date TIMESTAMP;

@@ -24,6 +24,10 @@ mybatis-plus:
     db-config:
       id-type: auto
 
+library:
+  borrow-duration-days: 14   # 借阅期限（天数），到期未还将标记为逾期
+  max-borrow-count: 5        # 每位用户同时最多可借册数
+
 jwt:
   secret: LibraryManagementSystemSecretKey2024ForJWTToken
   expiration: 86400000

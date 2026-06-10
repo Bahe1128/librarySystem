@@ -93,8 +93,8 @@ public class BorrowController {
     @PostMapping("/return")
     public Result<?> returnBook(@Valid @RequestBody ReturnRequest request) {
         try {
-            borrowService.returnBook(request.getRecordId());
-            return Result.success("归还成功", null);
+            String message = borrowService.returnBook(request.getRecordId());
+            return Result.success(message, null);
         } catch (RuntimeException e) {
             return Result.error(e.getMessage());
         }

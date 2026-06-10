@@ -34,8 +34,17 @@
           <el-icon :size="22"><Tickets /></el-icon>
         </div>
         <div class="stat-info">
-          <span class="stat-value">{{ stats.activeBorrows || 0 }}</span>
+          <span class="stat-value">{{ stats.borrowedBooks || 0 }}</span>
           <span class="stat-label">借出中</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon overdue">
+          <el-icon :size="22"><WarningFilled /></el-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.overdueBooks || 0 }}</span>
+          <span class="stat-label">逾期未还</span>
         </div>
       </div>
       <div class="stat-card">
@@ -197,9 +206,17 @@ onMounted(async () => {
 /* Stats */
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 64px;
+}
+
+@media (max-width: 1024px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .stats-row { grid-template-columns: 1fr; }
 }
 
 .stat-card {
@@ -230,6 +247,7 @@ onMounted(async () => {
 
 .stat-icon.books { background: var(--color-primary-bg); color: var(--color-primary); }
 .stat-icon.borrow { background: var(--color-success-light); color: var(--color-success); }
+.stat-icon.overdue { background: var(--color-danger-light, #fee2e2); color: var(--color-danger, #dc2626); }
 .stat-icon.users { background: var(--color-warning-light); color: var(--color-warning); }
 
 .stat-info { display: flex; flex-direction: column; }
@@ -297,7 +315,6 @@ onMounted(async () => {
 
 @media (max-width: 768px) {
   .hero-title { font-size: 32px; }
-  .stats-row { grid-template-columns: 1fr; }
   .feature-grid { grid-template-columns: 1fr; }
   .hero-actions { flex-direction: column; align-items: center; }
 }

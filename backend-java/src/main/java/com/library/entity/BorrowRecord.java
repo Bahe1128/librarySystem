@@ -22,6 +22,8 @@ public class BorrowRecord {
     private Long bookId;
     /** 借阅日期 */
     private LocalDateTime borrowDate;
+    /** 应还日期（逾期未还则标记为逾期） */
+    private LocalDateTime dueDate;
     /** 归还日期（null 表示尚未归还） */
     private LocalDateTime returnDate;
     /** 状态：borrowed（借阅中）或 returned（已归还） */
@@ -41,6 +43,9 @@ public class BorrowRecord {
     /** 借阅用户名（虚拟字段，来自 users 表） */
     @TableField(exist = false)
     private String username;
+    /** 是否逾期（虚拟字段，由 SQL 计算：due_date < 当前时间 且 未归还） */
+    @TableField(exist = false)
+    private Boolean overdue;
 
     // ========== Getter / Setter ==========
     public Long getId() { return id; }
@@ -51,6 +56,8 @@ public class BorrowRecord {
     public void setBookId(Long bookId) { this.bookId = bookId; }
     public LocalDateTime getBorrowDate() { return borrowDate; }
     public void setBorrowDate(LocalDateTime borrowDate) { this.borrowDate = borrowDate; }
+    public LocalDateTime getDueDate() { return dueDate; }
+    public void setDueDate(LocalDateTime dueDate) { this.dueDate = dueDate; }
     public LocalDateTime getReturnDate() { return returnDate; }
     public void setReturnDate(LocalDateTime returnDate) { this.returnDate = returnDate; }
     public String getStatus() { return status; }
@@ -63,4 +70,6 @@ public class BorrowRecord {
     public void setAuthor(String author) { this.author = author; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
+    public Boolean getOverdue() { return overdue; }
+    public void setOverdue(Boolean overdue) { this.overdue = overdue; }
 }

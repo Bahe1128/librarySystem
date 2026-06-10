@@ -31,14 +31,21 @@
         <el-table-column label="借阅日期" width="130">
           <template #default="{ row }">{{ formatDate(row.borrowDate) }}</template>
         </el-table-column>
+        <el-table-column label="应还日期" width="130">
+          <template #default="{ row }">
+            <span :class="{ 'overdue-text': row.overdue }">
+              {{ formatDate(row.dueDate) }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column label="归还日期" width="130">
           <template #default="{ row }">{{ row.returnDate ? formatDate(row.returnDate) : '-' }}</template>
         </el-table-column>
         <el-table-column label="状态" width="110">
           <template #default="{ row }">
-            <span class="status-badge" :class="row.status">
+            <span class="status-badge" :class="row.overdue ? 'overdue' : row.status">
               <span class="status-dot"></span>
-              {{ row.status === 'borrowed' ? '借阅中' : '已归还' }}
+              {{ row.overdue ? '已逾期' : (row.status === 'borrowed' ? '借阅中' : '已归还') }}
             </span>
           </template>
         </el-table-column>
@@ -212,9 +219,19 @@ onMounted(fetchRecords)
   color: var(--color-warning);
 }
 
+.status-badge.overdue {
+  background: var(--color-danger-light, #fee2e2);
+  color: var(--color-danger, #dc2626);
+}
+
 .status-badge.returned {
   background: var(--color-success-light);
   color: var(--color-success);
+}
+
+.overdue-text {
+  color: var(--color-danger, #dc2626);
+  font-weight: 600;
 }
 
 .status-dot {
