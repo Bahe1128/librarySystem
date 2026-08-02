@@ -11,9 +11,9 @@
       </button>
     </div>
 
-    <div class="table-container">
+    <div class="table-card">
       <el-table :data="users" v-loading="loading" style="width: 100%" table-layout="auto">
-        <el-table-column prop="id" label="ID" width="64" align="center" />
+        <el-table-column prop="id" label="ID" width="70" align="center" />
         <el-table-column prop="username" label="账号" min-width="120">
           <template #default="{ row }">
             <span class="username-cell">{{ row.username }}</span>
@@ -24,22 +24,22 @@
             <span>{{ row.name || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="idCard" label="身份证号" width="180">
+        <el-table-column prop="idCard" label="身份证号" width="190">
           <template #default="{ row }">
             <span class="idcard-text">{{ row.idCard || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="phone" label="手机号" width="130">
+        <el-table-column prop="phone" label="手机号" width="140">
           <template #default="{ row }">
             <span>{{ row.phone || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="email" label="邮箱" min-width="180">
+        <el-table-column prop="email" label="邮箱" min-width="190">
           <template #default="{ row }">
             <span class="email-text">{{ row.email || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="140" fixed="right">
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <div class="actions">
               <button class="action-btn edit" @click="openDialog(row)">编辑</button>
@@ -51,7 +51,9 @@
     </div>
 
     <div class="empty-state" v-if="!loading && users.length === 0">
-      <el-icon :size="48" color="var(--color-text-tertiary)"><User /></el-icon>
+      <div class="empty-icon">
+        <el-icon :size="40"><User /></el-icon>
+      </div>
       <h3>暂无用户</h3>
       <p>还没有普通用户账号</p>
     </div>
@@ -59,7 +61,7 @@
     <el-dialog
       v-model="dialogVisible"
       :title="editingId ? '编辑用户' : '添加用户'"
-      width="520px"
+      width="540px"
       :close-on-click-modal="false"
       destroy-on-close
     >
@@ -102,11 +104,13 @@
         </el-row>
       </el-form>
       <template #footer>
-        <button class="dialog-btn cancel" @click="dialogVisible = false">取消</button>
-        <button class="dialog-btn confirm" :disabled="submitting" @click="handleSubmit">
-          <el-icon v-if="submitting" :size="15"><Loading /></el-icon>
-          {{ submitting ? '提交中...' : '确认' }}
-        </button>
+        <div class="dialog-footer">
+          <button class="dialog-btn cancel" @click="dialogVisible = false">取消</button>
+          <button class="dialog-btn confirm" :disabled="submitting" @click="handleSubmit">
+            <el-icon v-if="submitting" :size="15"><Loading /></el-icon>
+            {{ submitting ? '提交中...' : '确认' }}
+          </button>
+        </div>
       </template>
     </el-dialog>
   </div>
@@ -244,17 +248,24 @@ onMounted(fetchUsers)
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
-.page-title { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
-.page-desc { font-size: 14px; color: var(--color-text-secondary); }
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 6px;
+  color: var(--color-text);
+}
+.page-desc { font-size: 15px; color: var(--color-text-secondary); }
 
+/* Add Button */
 .add-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 20px;
+  gap: 7px;
+  padding: 10px 22px;
   border: none;
   border-radius: var(--radius-lg);
   background: var(--color-primary);
@@ -263,85 +274,122 @@ onMounted(fetchUsers)
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all var(--transition);
+  transition: all var(--transition-fast);
   white-space: nowrap;
+  letter-spacing: -0.01em;
+  box-shadow: 0px 1px 2px rgba(107, 70, 212, 0.20);
 }
 
-.add-btn:hover { background: var(--color-primary-hover); }
+.add-btn:hover {
+  background: var(--color-primary-hover);
+  box-shadow: 0px 2px 4px rgba(107, 70, 212, 0.28);
+}
 
-.table-container {
+/* Table Card */
+.table-card {
   background: var(--color-surface);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
   overflow: hidden;
+  box-shadow: var(--shadow-xs);
 }
 
-.username-cell { font-weight: 500; }
-.idcard-text { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: var(--color-text-secondary); }
+.username-cell { font-weight: 600; color: var(--color-text); }
+
+.idcard-text {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
 .email-text { color: var(--color-text-secondary); }
 
 .actions { display: flex; gap: 6px; }
 
 .action-btn {
-  padding: 4px 12px;
+  padding: 5px 14px;
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all var(--transition);
+  transition: all var(--transition-fast);
+  letter-spacing: -0.01em;
 }
 
 .action-btn.edit {
-  background: var(--color-primary-light);
-  color: var(--color-primary);
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
 }
-
-.action-btn.edit:hover { background: var(--color-primary); color: #fff; }
+.action-btn.edit:hover { background: var(--color-primary-100); }
 
 .action-btn.delete {
-  background: var(--color-danger-light);
-  color: var(--color-danger);
+  background: var(--color-danger-50);
+  color: var(--color-danger-700);
 }
+.action-btn.delete:hover { background: var(--color-danger-100); }
 
-.action-btn.delete:hover { background: var(--color-danger); color: #fff; }
+html.dark .action-btn.edit   { background: rgba(124,90,228,0.12); color: var(--color-primary-400); }
+html.dark .action-btn.edit:hover   { background: rgba(124,90,228,0.20); }
+html.dark .action-btn.delete { background: rgba(239,68,68,0.12); color: var(--color-danger-400); }
+html.dark .action-btn.delete:hover { background: rgba(239,68,68,0.20); }
 
+/* Empty State */
 .empty-state {
   text-align: center;
   padding: 80px 20px;
   color: var(--color-text-secondary);
 }
-
-.empty-state h3 { font-size: 16px; font-weight: 600; margin: 16px 0 6px; color: var(--color-text); }
+.empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--color-border-light);
+  color: var(--color-text-tertiary);
+  margin-bottom: 20px;
+}
+.empty-state h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; color: var(--color-text); }
 .empty-state p { font-size: 14px; }
 
+/* Dialog */
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .dialog-btn {
-  padding: 8px 20px;
+  padding: 9px 22px;
   border: none;
   border-radius: var(--radius-md);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all var(--transition);
+  transition: all var(--transition-fast);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  letter-spacing: -0.01em;
 }
 
 .dialog-btn.cancel {
   background: var(--color-border-light);
   color: var(--color-text-secondary);
 }
-
-.dialog-btn.cancel:hover { background: var(--color-border); }
+.dialog-btn.cancel:hover { background: var(--color-border); color: var(--color-text); }
 
 .dialog-btn.confirm {
   background: var(--color-primary);
   color: #fff;
+  box-shadow: 0px 1px 2px rgba(107, 70, 212, 0.20);
 }
-
-.dialog-btn.confirm:hover:not(:disabled) { background: var(--color-primary-hover); }
-.dialog-btn.confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+.dialog-btn.confirm:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: 0px 2px 4px rgba(107, 70, 212, 0.28);
+}
+.dialog-btn.confirm:disabled { opacity: 0.55; cursor: not-allowed; }
 </style>

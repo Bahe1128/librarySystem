@@ -91,10 +91,11 @@ public class BorrowController {
      * @return 归还成功消息
      */
     @PostMapping("/return")
-    public Result<?> returnBook(@Valid @RequestBody ReturnRequest request) {
+    public Result<?> returnBook(@AuthenticationPrincipal UserPrincipal user,
+                                @Valid @RequestBody ReturnRequest request) {
         try {
-            String message = borrowService.returnBook(request.getRecordId());
-            return Result.success(message, null);
+            borrowService.returnBook(user.getId(), "admin".equals(user.getRole()), request.getRecordId());
+            return Result.success("归还成功", null);
         } catch (RuntimeException e) {
             return Result.error(e.getMessage());
         }

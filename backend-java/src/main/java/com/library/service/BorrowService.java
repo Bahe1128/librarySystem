@@ -19,8 +19,8 @@ public interface BorrowService {
     PageResult<BorrowRecord> findByUserId(Long userId, int page, int pageSize);
     /** 分页查询所有借阅记录（管理员使用） */
     PageResult<BorrowRecord> findAll(int page, int pageSize);
-    /** 归还图书，返回结果消息（含逾期提示） */
-    String returnBook(Long recordId);
+    /** 归还图书（校验操作者身份：管理员可归还任意记录，普通用户只能归还自己的） */
+    void returnBook(Long operatorId, boolean isAdmin, Long recordId);
     /** 获取系统统计数据（图书总数、用户总数、借阅总数等） */
     Map<String, Object> getSystemStats();
     /** 获取借阅趋势数据（按月统计的借阅量） */

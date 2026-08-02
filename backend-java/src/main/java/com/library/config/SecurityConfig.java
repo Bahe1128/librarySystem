@@ -3,6 +3,7 @@ package com.library.config;
 import com.library.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -62,15 +63,16 @@ public class SecurityConfig {
             // 配置 URL 访问权限
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll()    // 登录、注册接口：无需认证
-                .requestMatchers("/api/books/**").permitAll()   // 图书查询接口：无需认证
-                .requestMatchers("/h2-console/**").permitAll()  // H2 数据库控制台：无需认证
+                .requestMatchers(HttpMethod.GET, "/api/books/**").permitAll() // 图书查询接口：公开可读
+                .requestMatchers("/api/books/**").hasRole("admin") // 图书增删改：仅管理员
+                .requestMatchers("/h2-console/**").hasRole("admin") // H2 控制台：仅管理员（生产环境建议关闭）
                 .requestMatchers("/api/borrow/**").authenticated() // 借阅接口：需要登录
                 .requestMatchers("/api/stats/**").authenticated()  // 统计接口：需要登录
                 .requestMatchers("/api/users/**").hasRole("admin") // 用户管理：仅管理员可访问
                 .anyRequest().authenticated() // 其他所有请求都要认证
             )
-            // 允许 H2 控制台在 iframe 中显示（H2 使用 frame 呈现界面）
-            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
+            // H2 控制台使用 iframe 呈现界面，仅允许同源页面嵌入（比完全禁用更安全）
+            .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
             // 在 UsernamePasswordAuthenticationFilter 之前插入 JWT 过滤器
             // 这样每次请求都会先解析 JWT，然后将用户信息设置到 SecurityContext
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

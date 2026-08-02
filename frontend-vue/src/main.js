@@ -9,6 +9,8 @@ import ElementPlus from 'element-plus'
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
 // 引入 Element Plus 全局样式
 import 'element-plus/dist/index.css'
+// 引入 Element Plus 暗色模式样式（通过 <html> 上的 dark 类启用）
+import 'element-plus/theme-chalk/dark/css-vars.css'
 // 引入 Element Plus 的所有图标组件
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 // 引入根组件
@@ -17,12 +19,17 @@ import App from './App.vue'
 import router from './router'
 // 引入全局自定义样式
 import './style.css'
+// 引入主题 Store（用于初始化日间/夜间模式）
+import { useThemeStore } from './stores/theme'
 
 // 创建 Vue 应用实例
 const app = createApp(App)
 
-// 注册 Pinia 状态管理
-app.use(createPinia())
+// 创建 Pinia 实例并注册
+const pinia = createPinia()
+app.use(pinia)
+// 在渲染前初始化主题，避免页面加载时主题闪烁
+useThemeStore(pinia).initTheme()
 // 注册 Vue Router 路由
 app.use(router)
 // 注册 Element Plus 组件库，并设置中文本地化

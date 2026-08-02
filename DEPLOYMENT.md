@@ -1,83 +1,109 @@
 # 图书管理系统部署指南
 
-## 前端部署
+## 技术栈（当前）
 
-### 1. 安装依赖
+- **前端**：Vue 3 + Vite + Element Plus（`frontend-vue/`）
+- **后端**：Java Spring Boot 3.2 + MyBatis-Plus + H2 数据库（`backend-java/`）
+- **认证**：JWT（Spring Security + JJWT）
+
+> 注意：本文档早期版本描述的 React + Express + PostgreSQL 技术栈已随重构废弃，
+> 项目在 commit `3ca82a7` 迁移至 Spring Boot。
+
+## 后端部署（backend-java/）
+
+### 1. 环境要求
+
+- JDK 17+
+- Maven 3.6+
+
+### 2. 构建
+
 ```bash
-cd frontend
-npm install
+cd backend-java
+mvn clean package
 ```
 
-### 2. 构建项目
+### 3. 配置
+
+默认使用 H2 文件数据库（`backend-java/data/library.mv.db`），首次启动自动建表并初始化示例数据，无需额外配置数据库。
+
+生产环境建议通过环境变量覆盖以下配置（见 `src/main/resources/application.yml`）：
+
+| 环境变量 | 默认值 | 说明 |
+|---------|--------|------|
+| `JWT_SECRET` | 开发用默认密钥 | JWT 签名密钥，生产必须替换为强随机值 |
+| `SERVER_PORT` | `5000` | 服务端口 |
+
+### 4. 启动
+
 ```bash
+java -jar target/library-management-system-1.0.0.jar
+```
+
+### 默认账号（开发环境示例数据）
+
+| 用户名 | 密码 | 角色 |
+|--------|------|------|
+| admin | admin123 | 管理员 |
+| user1 | 123456 | 普通用户 |
+| user2 | 123456 | 普通用户 |
+
+## 前端部署（frontend-vue/）
+
+### 1. 构建
+
+```bash
+cd frontend-vue
+npm install
 npm run build
 ```
 
-### 3. 部署构建产物
-将 `dist` 目录中的文件部署到静态文件服务器，如 Nginx、Apache 或 Vercel、Netlify 等云服务。
+构建产物位于 `dist/`，可部署到任意静态文件服务器（Nginx、Apache、Vercel、Netlify 等）。
+注意：`/api` 开头的请求需反向代理到后端服务（默认 `http://localhost:5000`）。
 
-## 后端部署
+### 2. Nginx 配置示例
 
-### 1. 安装依赖
-```bash
-cd backend
-npm install
-```
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    root /path/to/frontend-vue/dist;
+    index index.html;
 
-### 2. 配置环境变量
-创建 `.env` 文件，配置数据库连接信息和JWT密钥：
-```
-PORT=5000
-DB_USER=postgres
-DB_HOST=localhost
-DB_NAME=library_management_system
-DB_PASSWORD=password
-DB_PORT=5432
-JWT_SECRET=your-secret-key
-```
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
 
-### 3. 初始化数据库
-```bash
-node src/init-db.js
-```
-
-### 4. 启动服务器
-```bash
-npm start
+    location /api/ {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
 ```
 
 ## 开发环境运行
 
-### 前端开发服务器
 ```bash
-cd frontend
+# 后端（端口 5000）
+cd backend-java
+mvn spring-boot:run
+
+# 前端（端口 5173，/api 自动代理到 5000）
+cd frontend-vue
 npm run dev
 ```
 
-### 后端开发服务器
-```bash
-cd backend
-npm run dev
-```
+## 安全注意事项
 
-## 系统架构
-
-- **前端**：React + Vite
-- **后端**：Express.js + PostgreSQL
-- **认证**：JWT
-- **API 接口**：RESTful API
+1. 生产环境务必通过环境变量 `JWT_SECRET` 设置强随机密钥，并启用 HTTPS
+2. H2 控制台（`/h2-console`）仅限管理员访问，生产环境建议彻底关闭
+3. 图书写接口（新增/编辑/删除）仅限管理员；公开接口仅限图书查询、登录、注册
+4. 定期备份 H2 数据库文件（`backend-java/data/library.mv.db`）
 
 ## 核心功能
 
-1. **用户管理**：注册、登录、权限控制
-2. **图书管理**：添加、编辑、删除、查询图书
-3. **借阅管理**：借阅图书、归还图书、查看借阅记录
-4. **数据统计**：系统统计、借阅趋势
-
-## 注意事项
-
-1. 确保 PostgreSQL 数据库已安装并运行
-2. 确保数据库连接信息正确配置
-3. 生产环境中应使用强JWT密钥
-4. 生产环境中应启用HTTPS
-5. 定期备份数据库
+1. **用户管理**：注册、登录、管理员账号管理、角色权限控制
+2. **图书管理**：添加、编辑、删除、分页查询与关键词搜索
+3. **借阅管理**：借阅图书、归还图书、借阅记录查询
+4. **数据统计**：系统统计看板、按月借阅趋势

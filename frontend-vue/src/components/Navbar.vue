@@ -3,7 +3,7 @@
     <div class="navbar-inner">
       <router-link to="/" class="brand">
         <span class="brand-icon">
-          <el-icon :size="22"><Reading /></el-icon>
+          <el-icon :size="20"><Reading /></el-icon>
         </span>
         <span class="brand-text">图书管理系统</span>
       </router-link>
@@ -23,7 +23,7 @@
               <button class="user-trigger">
                 <span class="avatar">{{ auth.user?.username?.charAt(0)?.toUpperCase() }}</span>
                 <span class="username">{{ auth.user?.username }}</span>
-                <el-icon :size="14"><ArrowDown /></el-icon>
+                <el-icon :size="14" class="chevron"><ArrowDown /></el-icon>
               </button>
               <template #dropdown>
                 <el-dropdown-menu>
@@ -40,6 +40,15 @@
           <router-link to="/login" class="btn btn-ghost">登录</router-link>
           <router-link to="/register" class="btn btn-primary">注册</router-link>
         </template>
+
+        <el-tooltip :content="theme.isDark ? '切换日间模式' : '切换夜间模式'" placement="bottom-end">
+          <button class="theme-toggle" @click="theme.toggle()" aria-label="切换日间/夜间模式">
+            <el-icon :size="18">
+              <Sunny v-if="!theme.isDark" />
+              <Moon v-else />
+            </el-icon>
+          </button>
+        </el-tooltip>
       </div>
     </div>
   </header>
@@ -52,7 +61,10 @@
 
 // 引入认证 Store 获取用户状态
 import { useAuthStore } from '../stores/auth'
+// 引入主题 Store 控制日间/夜间模式
+import { useThemeStore } from '../stores/theme'
 const auth = useAuthStore()
+const theme = useThemeStore()
 </script>
 
 <style scoped>
@@ -60,10 +72,14 @@ const auth = useAuthStore()
   position: sticky;
   top: 0;
   z-index: 100;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
   border-bottom: 1px solid var(--color-border);
+}
+
+html.dark .navbar {
+  background: rgba(12, 14, 18, 0.80);
 }
 
 .navbar-inner {
@@ -71,11 +87,12 @@ const auth = useAuthStore()
   margin: 0 auto;
   display: flex;
   align-items: center;
-  height: 64px;
-  padding: 0 24px;
-  gap: 32px;
+  height: 68px;
+  padding: 0 32px;
+  gap: 36px;
 }
 
+/* Brand */
 .brand {
   display: flex;
   align-items: center;
@@ -85,27 +102,26 @@ const auth = useAuthStore()
   font-weight: 700;
   font-size: 17px;
   flex-shrink: 0;
+  letter-spacing: -0.01em;
 }
 
 .brand-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   background: var(--color-primary);
   color: #fff;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 1px 3px rgba(107, 70, 212, 0.30), 0 4px 10px rgba(107, 70, 212, 0.12);
 }
 
-.brand-text {
-  letter-spacing: -0.01em;
-}
-
+/* Nav Links */
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex: 1;
 }
 
@@ -116,7 +132,7 @@ const auth = useAuthStore()
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
-  transition: all var(--transition);
+  transition: all var(--transition-fast);
 }
 
 .nav-link:hover {
@@ -126,9 +142,14 @@ const auth = useAuthStore()
 
 .nav-link.active {
   color: var(--color-primary);
-  background: var(--color-primary-light);
+  background: var(--color-primary-50);
 }
 
+html.dark .nav-link.active {
+  background: rgba(124, 90, 228, 0.10);
+}
+
+/* Actions */
 .nav-actions {
   display: flex;
   align-items: center;
@@ -143,21 +164,24 @@ const auth = useAuthStore()
   font-weight: 600;
   border: none;
   cursor: pointer;
-  transition: all var(--transition);
+  transition: all var(--transition-fast);
   text-decoration: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  letter-spacing: -0.01em;
 }
 
 .btn-primary {
   background: var(--color-primary);
   color: #fff;
+  box-shadow: 0px 1px 2px rgba(107, 70, 212, 0.24);
 }
 
 .btn-primary:hover {
   background: var(--color-primary-hover);
   color: #fff;
+  box-shadow: 0px 1px 3px rgba(107, 70, 212, 0.30);
 }
 
 .btn-ghost {
@@ -170,37 +194,45 @@ const auth = useAuthStore()
   color: var(--color-text);
 }
 
+/* User */
 .user-trigger {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 12px 4px 4px;
+  padding: 3px 12px 3px 3px;
   border: none;
-  border-radius: 999px;
-  background: var(--color-bg);
+  border-radius: var(--radius-full);
+  background: var(--color-border-light);
   cursor: pointer;
   font-family: inherit;
   font-size: 14px;
   font-weight: 500;
   color: var(--color-text);
-  transition: all var(--transition);
+  transition: all var(--transition-fast);
+  letter-spacing: -0.01em;
 }
 
 .user-trigger:hover {
-  background: var(--color-border-light);
+  background: var(--color-border);
+}
+
+.chevron {
+  color: var(--color-text-tertiary);
+  transition: transform var(--transition-fast);
 }
 
 .avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--color-primary);
+  background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600));
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 13px;
   font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 .username {
@@ -210,7 +242,31 @@ const auth = useAuthStore()
   white-space: nowrap;
 }
 
+/* Theme Toggle */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.theme-toggle:hover {
+  background: var(--color-border-light);
+  color: var(--color-text);
+}
+
 @media (max-width: 768px) {
+  .navbar-inner {
+    padding: 0 16px;
+    gap: 16px;
+  }
   .nav-links { display: none; }
 }
 </style>

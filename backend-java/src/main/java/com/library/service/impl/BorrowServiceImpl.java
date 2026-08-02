@@ -66,18 +66,15 @@ public class BorrowServiceImpl implements BorrowService {
     @Override
     @Transactional
     public BorrowRecord borrow(Long userId, Long bookId) {
-        // ① 借阅数量上限检查：统计该用户当前在借的图书数量
-        LambdaQueryWrapper<BorrowRecord> activeBorrows = new LambdaQueryWrapper<>();
-        activeBorrows.eq(BorrowRecord::getUserId, userId)
-                      .eq(BorrowRecord::getStatus, "borrowed");
-        long activeCount = borrowRecordMapper.selectCount(activeBorrows);
-        if (activeCount >= maxBorrowCount) {
-            throw new RuntimeException("借阅已达上限（最多 " + maxBorrowCount + " 本），请先归还后再借");
+        // 检查图书是否存在
+        Book book = bookMapper.selectById(bookId);
+        if (book == null) {
+            throw new RuntimeException("图书不存在或无可用副本");
         }
 
-        // ② 悲观锁锁定图书记录 —— 阻塞其他事务对该行的修改，防止并发超卖
-        Book book = bookMapper.selectByIdForUpdate(bookId);
-        if (book == null || book.getAvailableCopies() <= 0) {
+        // 原子扣减库存：仅当有可用副本时才成功，防止并发借阅时超借
+        int affected = bookMapper.decrementAvailableCopies(bookId);
+        if (affected == 0) {
             throw new RuntimeException("图书不存在或无可用副本");
         }
 
@@ -89,10 +86,6 @@ public class BorrowServiceImpl implements BorrowService {
         record.setBorrowDate(LocalDateTime.now());
         record.setDueDate(LocalDateTime.now().plusDays(borrowDurationDays)); // 应还日期 = 借阅日期 + 借阅期限
         borrowRecordMapper.insert(record);
-
-        // ④ 扣减图书可用库存
-        book.setAvailableCopies(book.getAvailableCopies() - 1);
-        bookMapper.updateById(book);
 
         return record;
     }
@@ -118,30 +111,35 @@ public class BorrowServiceImpl implements BorrowService {
      * ③ 恢复库存 → ④ 返回结果消息（含是否逾期）。
      * </p>
      *
-     * @param recordId 借阅记录 ID
-     * @return 归还结果描述，如包含逾期信息
+     * @param operatorId 操作者用户 ID
+     * @param isAdmin    操作者是否为管理员
+     * @param recordId   借阅记录 ID
      * @throws RuntimeException 借阅记录不存在或已归还
      */
     @Override
     @Transactional
-    public String returnBook(Long recordId) {
+    public void returnBook(Long operatorId, boolean isAdmin, Long recordId) {
+        // 查找借阅记录并校验状态
         BorrowRecord record = borrowRecordMapper.selectById(recordId);
         if (record == null || !"borrowed".equals(record.getStatus())) {
             throw new RuntimeException("借阅记录不存在或已归还");
         }
 
-        LocalDateTime now = LocalDateTime.now();
-        boolean isOverdue = record.getDueDate() != null && record.getDueDate().isBefore(now);
+        // 权限校验：管理员可归还任意记录，普通用户只能归还自己的
+        if (!isAdmin && !record.getUserId().equals(operatorId)) {
+            throw new RuntimeException("无权归还他人的借阅记录");
+        }
 
+        // 更新记录为已归还
         record.setStatus("returned");
         record.setReturnDate(now);
         borrowRecordMapper.updateById(record);
 
         Book book = bookMapper.selectById(record.getBookId());
-        book.setAvailableCopies(book.getAvailableCopies() + 1);
-        bookMapper.updateById(book);
-
-        return isOverdue ? "归还成功（已逾期，请注意按时归还）" : "归还成功";
+        if (book != null) {
+            book.setAvailableCopies(book.getAvailableCopies() + 1);
+            bookMapper.updateById(book);
+        }
     }
 
     @Override

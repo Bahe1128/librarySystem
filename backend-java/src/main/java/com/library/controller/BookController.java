@@ -6,6 +6,8 @@ import com.library.entity.Book;
 import com.library.service.BookService;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * 图书管理控制器
  * <p>
@@ -39,6 +41,21 @@ public class BookController {
     public Result<PageResult<Book>> getAll(@RequestParam(defaultValue = "1") int page,
                                            @RequestParam(defaultValue = "10") int pageSize) {
         return Result.success(bookService.findAll(page, pageSize));
+    }
+
+    /**
+     * 查询全部图书（不分页）
+     * GET /api/books/all
+     * <p>
+     * 用于前端书架按分类分组展示，单次返回全部馆藏。
+     * 注意：该路径必须声明在 /{id} 之前，否则会被当作 id 匹配。
+     * </p>
+     *
+     * @return 全部图书列表
+     */
+    @GetMapping("/all")
+    public Result<List<Book>> getAll() {
+        return Result.success(bookService.findAll());
     }
 
     /**

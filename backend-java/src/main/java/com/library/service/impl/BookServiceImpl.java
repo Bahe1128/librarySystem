@@ -4,9 +4,13 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.library.common.PageResult;
 import com.library.entity.Book;
+import com.library.entity.BorrowRecord;
 import com.library.mapper.BookMapper;
+import com.library.mapper.BorrowRecordMapper;
 import com.library.service.BookService;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * 图书服务实现类
@@ -20,12 +24,14 @@ import org.springframework.stereotype.Service;
 public class BookServiceImpl implements BookService {
 
     private final BookMapper bookMapper;
+    private final BorrowRecordMapper borrowRecordMapper;
 
     /**
      * 构造方法注入 BookMapper
      */
-    public BookServiceImpl(BookMapper bookMapper) {
+    public BookServiceImpl(BookMapper bookMapper, BorrowRecordMapper borrowRecordMapper) {
         this.bookMapper = bookMapper;
+        this.borrowRecordMapper = borrowRecordMapper;
     }
 
     /**
@@ -40,6 +46,17 @@ public class BookServiceImpl implements BookService {
         Page<Book> p = new Page<>(page, pageSize);          // 创建 MyBatis Plus 分页对象
         Page<Book> result = bookMapper.selectPage(p, null); // null 表示无查询条件，查所有
         return new PageResult<>(result.getRecords(), result.getTotal(), result.getCurrent(), result.getSize());
+    }
+
+    /**
+     * 查询全部图书（不分页）
+     * 供前端书架按分类展示使用，单次返回全部馆藏
+     *
+     * @return 全部图书列表
+     */
+    @Override
+    public List<Book> findAll() {
+        return bookMapper.selectList(null); // 无条件查询所有记录
     }
 
     /**
@@ -120,6 +137,14 @@ public class BookServiceImpl implements BookService {
      */
     @Override
     public void delete(Long id) {
+        // 若有未归还的借阅记录，拒绝删除，避免产生孤儿记录或违反外键约束
+        Long activeBorrows = borrowRecordMapper.selectCount(
+                new LambdaQueryWrapper<BorrowRecord>()
+                        .eq(BorrowRecord::getBookId, id)
+                        .eq(BorrowRecord::getStatus, "borrowed"));
+        if (activeBorrows != null && activeBorrows > 0) {
+            throw new RuntimeException("该书存在未归还的借阅记录，无法删除");
+        }
         bookMapper.deleteById(id);
     }
 }

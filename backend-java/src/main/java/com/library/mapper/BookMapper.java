@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.library.entity.Book;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 /**
  * 图书表数据访问接口（Mapper）
@@ -15,17 +15,19 @@ import org.apache.ibatis.annotations.Select;
  */
 @Mapper
 public interface BookMapper extends BaseMapper<Book> {
+    // BaseMapper 已提供了常用 CRUD 方法：insert、deleteById、updateById、selectById、selectList 等
 
     /**
-     * 使用悲观锁查询图书（SELECT ... FOR UPDATE）
+     * 原子扣减可用副本数
      * <p>
-     * 在事务内调用时，该查询会锁住目标行直到事务提交，
-     * 阻止其他事务同时读取/修改库存，防止并发借书导致超卖。
+     * 使用条件 UPDATE 保证并发安全：仅当库存大于 0 时才扣减成功，
+     * 返回值为受影响行数（0 表示无可用副本），避免并发借阅导致超借。
      * </p>
      *
-     * @param id 图书 ID
-     * @return 被锁定的图书记录，或 null（不存在）
+     * @param bookId 图书 ID
+     * @return 扣减成功的行数（0 表示扣减失败）
      */
-    @Select("SELECT * FROM books WHERE id = #{id} FOR UPDATE")
-    Book selectByIdForUpdate(@Param("id") Long id);
+    @Update("UPDATE books SET available_copies = available_copies - 1 " +
+            "WHERE id = #{bookId} AND available_copies > 0")
+    int decrementAvailableCopies(@Param("bookId") Long bookId);
 }

@@ -27,8 +27,11 @@ request.interceptors.response.use(
   // 成功响应处理
   response => {
     const data = response.data
-    // 如果后端返回 code 为 401，说明 Token 已过期或无效
-    if (data.code === 401) {
+    // 登录接口失败也返回 code=401（但 HTTP 状态为 200），需排除，
+    // 避免把"用户名或密码错误"误当成"会话过期"触发整页刷新
+    const isLoginRequest = (response.config.url || '').includes('/auth/login')
+    // 如果后端返回 code 为 401（且非登录请求），说明 Token 已过期或无效
+    if (data.code === 401 && !isLoginRequest) {
       // 清除本地存储的认证信息
       localStorage.removeItem('token')
       localStorage.removeItem('user')
@@ -66,6 +69,8 @@ export const authAPI = {
 export const bookAPI = {
   // 获取图书列表（分页）
   getAll: (page = 1, pageSize = 10) => request.get('/books', { params: { page, pageSize } }),
+  // 获取全部图书（不分页，用于书架分类展示）
+  getAllFlat: () => request.get('/books/all'),
   // 搜索图书（分页）：根据关键词匹配书名、作者、ISBN 或分类
   search: (keyword, page = 1, pageSize = 10) => request.get('/books/search', { params: { keyword, page, pageSize } }),
   // 根据 ID 获取单本图书详情

@@ -23,22 +23,28 @@ import Navbar from './components/Navbar.vue'
 .main-container {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 32px 24px 64px;
-  min-height: calc(100vh - 64px);
+  padding: 40px 32px 80px;
+  min-height: calc(100vh - 68px);
 }
 
 .page-enter-active,
 .page-leave-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .page-enter-from {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(10px);
 }
 
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-8px);
+  transform: translateY(-10px);
+}
+
+@media (max-width: 768px) {
+  .main-container {
+    padding: 24px 16px 64px;
+  }
 }
 </style>

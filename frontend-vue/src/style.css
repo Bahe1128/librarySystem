@@ -1,43 +1,146 @@
-/* ===== Design System ===== */
+/* ===== Untitled UI Inspired Design System =====
+   Reference: Jordan Hughes' Untitled UI Figma Design System
+   Principles: Clean, refined, generous whitespace, subtle depth
+*/
+
 :root {
-  /* Colors */
-  --color-bg: #f9fafb;
-  --color-surface: #ffffff;
-  --color-border: #e5e7eb;
-  --color-border-light: #f3f4f6;
+  /* ---- Gray Scale (Untitled UI signature) ---- */
+  --gray-25:  #fcfcfd;
+  --gray-50:  #f9fafb;
+  --gray-100: #f2f4f7;
+  --gray-200: #eaecf0;
+  --gray-300: #d0d5dd;
+  --gray-400: #98a2b3;
+  --gray-500: #667085;
+  --gray-600: #475467;
+  --gray-700: #344054;
+  --gray-800: #1d2939;
+  --gray-900: #101828;
 
-  --color-text: #111827;
-  --color-text-secondary: #6b7280;
-  --color-text-tertiary: #9ca3af;
+  /* ---- Brand / Primary — refined purple ---- */
+  --color-primary-25:  #faf9ff;
+  --color-primary-50:  #f4f2ff;
+  --color-primary-100: #e9e4fd;
+  --color-primary-200: #d5cdfa;
+  --color-primary-300: #b9abf5;
+  --color-primary-400: #9b84ed;
+  --color-primary-500: #7c5ae4;
+  --color-primary-600: #6b46d4;
+  --color-primary-700: #5a38b5;
+  --color-primary-800: #4a2d96;
+  --color-primary-900: #3b2278;
 
-  --color-primary: #7c3aed;
-  --color-primary-hover: #6d28d9;
-  --color-primary-light: #ede9fe;
-  --color-primary-bg: #f5f3ff;
+  /* Semantic alias — maps to existing var names used across components */
+  --color-bg:             var(--gray-50);
+  --color-surface:        #ffffff;
+  --color-border:         var(--gray-200);
+  --color-border-light:   var(--gray-100);
+  --color-border-hover:   var(--gray-300);
 
-  --color-success: #059669;
-  --color-success-light: #d1fae5;
-  --color-warning: #d97706;
-  --color-warning-light: #fef3c7;
-  --color-danger: #dc2626;
-  --color-danger-light: #fee2e2;
+  --color-text:           var(--gray-900);
+  --color-text-secondary: var(--gray-500);
+  --color-text-tertiary:  var(--gray-400);
+  --color-text-disabled:  var(--gray-300);
 
-  /* Shadows */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.06), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --color-primary:        var(--color-primary-600);
+  --color-primary-hover:  var(--color-primary-700);
+  --color-primary-light:  var(--color-primary-100);
+  --color-primary-bg:     var(--color-primary-50);
 
-  /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  /* Semantic Colors */
+  --color-success-50:  #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-400: #34d399;
+  --color-success-500: #10b981;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+  --color-success:      var(--color-success-600);
+  --color-success-light:var(--color-success-100);
 
-  /* Transitions */
-  --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --color-warning-50:  #fffaeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-400: #fbbf24;
+  --color-warning-500: #f59e0b;
+  --color-warning-600: #d97706;
+  --color-warning-700: #b45309;
+  --color-warning:      var(--color-warning-600);
+  --color-warning-light:var(--color-warning-100);
+
+  --color-danger-50:  #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-400: #f87171;
+  --color-danger-500: #ef4444;
+  --color-danger-600: #dc2626;
+  --color-danger-700: #b91c1c;
+  --color-danger:       var(--color-danger-600);
+  --color-danger-light: var(--color-danger-100);
+
+  /* ---- Shadows (Untitled UI layered shadows) ---- */
+  --shadow-xs: 0px 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-sm: 0px 1px 3px rgba(16, 24, 40, 0.06), 0px 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-md: 0px 4px 8px -2px rgba(16, 24, 40, 0.06), 0px 2px 4px -2px rgba(16, 24, 40, 0.04);
+  --shadow-lg: 0px 12px 16px -4px rgba(16, 24, 40, 0.06), 0px 4px 6px -2px rgba(16, 24, 40, 0.04);
+  --shadow-xl: 0px 20px 24px -4px rgba(16, 24, 40, 0.08), 0px 8px 10px -4px rgba(16, 24, 40, 0.04);
+  --shadow-2xl:0px 24px 48px -12px rgba(16, 24, 40, 0.12);
+  --shadow-3xl:0px 32px 64px -12px rgba(16, 24, 40, 0.16);
+
+  /* Focus ring */
+  --focus-ring: 0 0 0 4px rgba(124, 90, 228, 0.12);
+
+  /* ---- Radius ---- */
+  --radius-xs:  4px;
+  --radius-sm:  6px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+
+  /* ---- Transitions ---- */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition:      200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ===== Dark Mode ===== */
+html.dark {
+  --color-bg:             #0c0e12;
+  --color-surface:        #13161d;
+  --color-border:         #1f242f;
+  --color-border-light:   #181c26;
+  --color-border-hover:   #2a3040;
+
+  --color-text:           #e8eaef;
+  --color-text-secondary: #8b93a5;
+  --color-text-tertiary:  #5f6a7e;
+  --color-text-disabled:  #3a4050;
+
+  --color-primary:        var(--color-primary-400);
+  --color-primary-hover:  var(--color-primary-300);
+  --color-primary-light:  rgba(124, 90, 228, 0.18);
+  --color-primary-bg:     rgba(124, 90, 228, 0.10);
+
+  --color-success:        var(--color-success-400);
+  --color-success-light:  rgba(16, 185, 129, 0.14);
+  --color-warning:        var(--color-warning-400);
+  --color-warning-light:  rgba(245, 158, 11, 0.16);
+  --color-danger:         var(--color-danger-400);
+  --color-danger-light:   rgba(239, 68, 68, 0.14);
+
+  --shadow-xs:  0px 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-sm:  0px 1px 3px rgba(0, 0, 0, 0.35), 0px 1px 2px rgba(0, 0, 0, 0.25);
+  --shadow-md:  0px 4px 8px -2px rgba(0, 0, 0, 0.40), 0px 2px 4px -2px rgba(0, 0, 0, 0.30);
+  --shadow-lg:  0px 12px 16px -4px rgba(0, 0, 0, 0.45), 0px 4px 6px -2px rgba(0, 0, 0, 0.30);
+  --shadow-xl:  0px 20px 24px -4px rgba(0, 0, 0, 0.50), 0px 8px 10px -4px rgba(0, 0, 0, 0.35);
+  --shadow-2xl: 0px 24px 48px -12px rgba(0, 0, 0, 0.60);
+  --shadow-3xl: 0px 32px 64px -12px rgba(0, 0, 0, 0.70);
+
+  --focus-ring: 0 0 0 4px rgba(155, 132, 237, 0.18);
+}
+
+/* Dark mode overrides for hardcoded colors */
+html.dark .feature-icon.sky   { background: rgba(56, 189, 248, 0.12); color: #38bdf8; }
+html.dark .feature-icon.slate { background: rgba(148, 163, 184, 0.12); color: #94a3b8; }
 
 /* ===== Reset ===== */
 *,
@@ -61,14 +164,14 @@ body {
 a {
   color: var(--color-primary);
   text-decoration: none;
-  transition: color var(--transition);
+  transition: color var(--transition-fast);
 }
 
 a:hover {
   color: var(--color-primary-hover);
 }
 
-/* ===== Scrollbar ===== */
+/* ===== Scrollbar (refined) ===== */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -79,10 +182,146 @@ a:hover {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-border);
+  background: var(--gray-300);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-tertiary);
+  background: var(--gray-400);
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: var(--gray-700);
+}
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-600);
+}
+
+/* ===== Utility Classes ===== */
+.text-mono {
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+
+/* ===== Element Plus Overrides =====
+   Make Element Plus components feel like Untitled UI */
+
+/* Table */
+.el-table {
+  --el-table-border-color: var(--color-border);
+  --el-table-header-bg-color: var(--gray-50);
+  --el-table-row-hover-bg-color: var(--gray-25);
+  --el-table-current-row-bg-color: var(--color-primary-25);
+  font-size: 14px;
+}
+html.dark .el-table {
+  --el-table-header-bg-color: var(--gray-900);
+  --el-table-row-hover-bg-color: rgba(255,255,255,0.02);
+  --el-table-current-row-bg-color: rgba(124,90,228,0.06);
+}
+
+.el-table th.el-table__cell {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--color-text-secondary);
+}
+
+/* Pagination */
+.el-pagination {
+  --el-pagination-button-bg-color: var(--color-surface);
+  --el-pagination-hover-color: var(--color-primary);
+  font-size: 14px;
+}
+.el-pagination .btn-prev,
+.el-pagination .btn-next,
+.el-pagination .el-pager li {
+  border-radius: var(--radius-md) !important;
+  font-weight: 500;
+}
+
+/* Input */
+.el-input__wrapper {
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 0 0 1px var(--color-border) !important;
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--color-border-hover) !important;
+}
+.el-input.is-focus .el-input__wrapper,
+.el-input__wrapper.is-focus {
+  box-shadow: var(--focus-ring) !important;
+}
+.el-input__inner {
+  font-size: 14px;
+  color: var(--color-text);
+}
+.el-input__inner::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+/* Input Number */
+.el-input-number .el-input__wrapper {
+  border-radius: var(--radius-md) !important;
+}
+
+/* Dialog */
+.el-dialog {
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-2xl) !important;
+}
+.el-dialog__header {
+  padding: 24px 24px 0 !important;
+}
+.el-dialog__title {
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+}
+.el-dialog__body {
+  padding: 20px 24px !important;
+}
+.el-dialog__footer {
+  padding: 0 24px 24px !important;
+}
+
+/* Form */
+.el-form-item__label {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+  padding-bottom: 4px !important;
+}
+
+/* Message Box */
+.el-message-box {
+  border-radius: var(--radius-xl) !important;
+  box-shadow: var(--shadow-2xl) !important;
+}
+
+/* Dropdown */
+.el-dropdown-menu {
+  border-radius: var(--radius-lg) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: var(--shadow-lg) !important;
+  padding: 4px !important;
+}
+.el-dropdown-menu__item {
+  border-radius: var(--radius-md) !important;
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* Loading */
+.el-loading-mask {
+  border-radius: inherit;
+}
+
+/* Tooltip */
+.el-tooltip__trigger:focus-visible {
+  outline: none;
 }

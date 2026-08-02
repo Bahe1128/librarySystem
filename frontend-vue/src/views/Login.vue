@@ -3,7 +3,7 @@
     <div class="auth-card">
       <div class="auth-header">
         <div class="auth-icon">
-          <el-icon :size="24"><Lock /></el-icon>
+          <el-icon :size="22"><Lock /></el-icon>
         </div>
         <h2>欢迎回来</h2>
         <p>登录你的账号继续使用</p>
@@ -32,7 +32,7 @@
           />
         </div>
         <button class="submit-btn" type="submit" :disabled="loading">
-          <el-icon v-if="loading" :size="18"><Loading /></el-icon>
+          <el-icon v-if="loading" :size="18" class="is-loading"><Loading /></el-icon>
           {{ loading ? '登录中...' : '登录' }}
         </button>
       </form>
@@ -95,49 +95,60 @@ async function handleLogin() {
 }
 
 .auth-card {
-  width: 420px;
-  padding: 40px;
+  width: 440px;
+  padding: 44px 40px 40px;
   background: var(--color-surface);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xl);
 }
 
-.auth-header { text-align: center; margin-bottom: 32px; }
+.auth-header { text-align: center; margin-bottom: 36px; }
 
 .auth-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
-  background: var(--color-primary-bg);
-  color: var(--color-primary);
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
+  background: var(--color-primary-50);
+  color: var(--color-primary-600);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
+}
+
+html.dark .auth-icon {
+  background: rgba(124, 90, 228, 0.12);
+  color: var(--color-primary-400);
 }
 
 .auth-header h2 {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-bottom: 6px;
+  color: var(--color-text);
 }
 
 .auth-header p {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--color-text-secondary);
 }
 
-.auth-form { display: flex; flex-direction: column; gap: 18px; }
+.auth-form { display: flex; flex-direction: column; gap: 20px; }
 
 .field { display: flex; flex-direction: column; gap: 6px; }
-.field-label { font-size: 13px; font-weight: 600; color: var(--color-text); }
+.field-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
 
 .submit-btn {
   width: 100%;
   padding: 12px;
-  margin-top: 4px;
+  margin-top: 6px;
   border: none;
   border-radius: var(--radius-lg);
   background: var(--color-primary);
@@ -146,20 +157,31 @@ async function handleLogin() {
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  transition: all var(--transition);
+  transition: all var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  letter-spacing: -0.01em;
+  box-shadow: 0px 1px 2px rgba(107, 70, 212, 0.20), 0px 4px 10px rgba(107, 70, 212, 0.10);
 }
 
-.submit-btn:hover:not(:disabled) { background: var(--color-primary-hover); }
-.submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.submit-btn:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: 0px 2px 4px rgba(107, 70, 212, 0.28), 0px 8px 16px rgba(107, 70, 212, 0.14);
+}
+.submit-btn:disabled { opacity: 0.60; cursor: not-allowed; }
 
 .auth-footer {
   text-align: center;
-  margin-top: 24px;
-  font-size: 13px;
+  margin-top: 26px;
+  font-size: 14px;
   color: var(--color-text-secondary);
 }
+
+.auth-footer a {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+.auth-footer a:hover { color: var(--color-primary-hover); }
 </style>

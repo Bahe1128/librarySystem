@@ -9,19 +9,19 @@
       <p class="hero-desc">支持图书的添加、编辑、查询与借阅归还，让图书馆运营井然有序。</p>
       <div class="hero-actions">
         <router-link to="/books" class="btn-hero-primary">
-          <el-icon><Search /></el-icon>
+          <el-icon :size="18"><Search /></el-icon>
           浏览图书
         </router-link>
-        <router-link v-if="!auth.isLoggedIn" to="/login" class="btn-hero-ghost">
+        <router-link v-if="!auth.isLoggedIn" to="/login" class="btn-hero-secondary">
           立即登录
-          <el-icon><ArrowRight /></el-icon>
+          <el-icon :size="16"><ArrowRight /></el-icon>
         </router-link>
       </div>
     </section>
 
     <section class="stats-row" v-if="stats">
       <div class="stat-card">
-        <div class="stat-icon books">
+        <div class="stat-icon-wrapper stat-icon-books">
           <el-icon :size="22"><Reading /></el-icon>
         </div>
         <div class="stat-info">
@@ -30,7 +30,7 @@
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon borrow">
+        <div class="stat-icon-wrapper stat-icon-borrow">
           <el-icon :size="22"><Tickets /></el-icon>
         </div>
         <div class="stat-info">
@@ -39,6 +39,7 @@
         </div>
       </div>
       <div class="stat-card">
+<<<<<<< HEAD
         <div class="stat-icon overdue">
           <el-icon :size="22"><WarningFilled /></el-icon>
         </div>
@@ -49,6 +50,9 @@
       </div>
       <div class="stat-card">
         <div class="stat-icon users">
+=======
+        <div class="stat-icon-wrapper stat-icon-users">
+>>>>>>> 752cc61 (feat: 前端书架重构、后端安全加固与部署文档更新)
           <el-icon :size="22"><User /></el-icon>
         </div>
         <div class="stat-info">
@@ -59,11 +63,14 @@
     </section>
 
     <section class="features">
-      <h2 class="section-title">核心功能</h2>
+      <div class="section-header">
+        <h2 class="section-title">核心功能</h2>
+        <p class="section-subtitle">覆盖图书管理全流程的强大功能</p>
+      </div>
       <div class="feature-grid">
         <div class="feature-card" v-for="f in features" :key="f.title">
           <div class="feature-icon" :class="f.color">
-            <el-icon :size="24"><component :is="f.icon" /></el-icon>
+            <el-icon :size="22"><component :is="f.icon" /></el-icon>
           </div>
           <h3 class="feature-title">{{ f.title }}</h3>
           <p class="feature-desc">{{ f.desc }}</p>
@@ -111,37 +118,45 @@ onMounted(async () => {
 <style scoped>
 .home { max-width: 960px; margin: 0 auto; }
 
-/* Hero */
+/* ===== Hero ===== */
 .hero {
   text-align: center;
-  padding: 64px 0 48px;
+  padding: 72px 0 56px;
 }
 
 .hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: var(--color-primary-light);
-  color: var(--color-primary);
+  padding: 5px 14px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 24px;
+  border: 1px solid var(--color-primary-100);
+}
+
+html.dark .hero-badge {
+  background: rgba(124, 90, 228, 0.12);
+  color: var(--color-primary-300);
+  border-color: rgba(124, 90, 228, 0.18);
 }
 
 .badge-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--color-primary);
+  background: var(--color-primary-500);
+  box-shadow: 0 0 0 2px rgba(124, 90, 228, 0.20);
 }
 
 .hero-title {
-  font-size: 48px;
+  font-size: 52px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  line-height: 1.15;
+  line-height: 1.12;
   color: var(--color-text);
   margin-bottom: 16px;
 }
@@ -149,8 +164,8 @@ onMounted(async () => {
 .hero-desc {
   font-size: 18px;
   color: var(--color-text-secondary);
-  max-width: 520px;
-  margin: 0 auto 32px;
+  max-width: 540px;
+  margin: 0 auto 36px;
   line-height: 1.7;
 }
 
@@ -164,7 +179,7 @@ onMounted(async () => {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 12px 28px;
+  padding: 13px 30px;
   border-radius: var(--radius-lg);
   background: var(--color-primary);
   color: #fff;
@@ -172,21 +187,22 @@ onMounted(async () => {
   font-weight: 600;
   text-decoration: none;
   transition: all var(--transition);
-  box-shadow: 0 1px 3px rgba(124, 58, 237, 0.3), 0 4px 12px rgba(124, 58, 237, 0.15);
+  letter-spacing: -0.01em;
+  box-shadow: 0px 1px 2px rgba(107, 70, 212, 0.24), 0px 4px 12px rgba(107, 70, 212, 0.12);
 }
 
 .btn-hero-primary:hover {
   background: var(--color-primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35), 0 8px 20px rgba(124, 58, 237, 0.2);
+  box-shadow: 0px 2px 4px rgba(107, 70, 212, 0.28), 0px 8px 20px rgba(107, 70, 212, 0.16);
   color: #fff;
 }
 
-.btn-hero-ghost {
+.btn-hero-secondary {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 12px 28px;
+  padding: 13px 28px;
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   color: var(--color-text);
@@ -195,20 +211,28 @@ onMounted(async () => {
   text-decoration: none;
   border: 1px solid var(--color-border);
   transition: all var(--transition);
+  letter-spacing: -0.01em;
 }
 
-.btn-hero-ghost:hover {
-  border-color: var(--color-text-tertiary);
-  background: var(--color-bg);
+.btn-hero-secondary:hover {
+  border-color: var(--color-border-hover);
+  background: var(--gray-50);
   color: var(--color-text);
+  box-shadow: var(--shadow-xs);
 }
 
-/* Stats */
+/* ===== Stats ===== */
 .stats-row {
   display: grid;
+<<<<<<< HEAD
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 64px;
+=======
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 80px;
+>>>>>>> 752cc61 (feat: 前端书架重构、后端安全加固与部署文档更新)
 }
 
 @media (max-width: 1024px) {
@@ -222,99 +246,139 @@ onMounted(async () => {
 .stat-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 20px 24px;
+  gap: 18px;
+  padding: 24px 28px;
   background: var(--color-surface);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
   transition: all var(--transition);
 }
 
 .stat-card:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-lg);
   border-color: transparent;
+  transform: translateY(-2px);
 }
 
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-md);
+.stat-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
+<<<<<<< HEAD
 .stat-icon.books { background: var(--color-primary-bg); color: var(--color-primary); }
 .stat-icon.borrow { background: var(--color-success-light); color: var(--color-success); }
 .stat-icon.overdue { background: var(--color-danger-light, #fee2e2); color: var(--color-danger, #dc2626); }
 .stat-icon.users { background: var(--color-warning-light); color: var(--color-warning); }
+=======
+.stat-icon-books  { background: var(--color-primary-50); color: var(--color-primary-600); }
+.stat-icon-borrow { background: var(--color-success-50); color: var(--color-success-600); }
+.stat-icon-users  { background: var(--color-warning-50); color: var(--color-warning-600); }
+
+html.dark .stat-icon-books  { background: rgba(124,90,228,0.12); color: var(--color-primary-400); }
+html.dark .stat-icon-borrow { background: rgba(16,185,129,0.12); color: var(--color-success-400); }
+html.dark .stat-icon-users  { background: rgba(245,158,11,0.12); color: var(--color-warning-400); }
+>>>>>>> 752cc61 (feat: 前端书架重构、后端安全加固与部署文档更新)
 
 .stat-info { display: flex; flex-direction: column; }
-.stat-value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
-.stat-label { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
+.stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.stat-label { font-size: 14px; color: var(--color-text-secondary); margin-top: 2px; font-weight: 500; }
 
-/* Features */
-.features { padding-bottom: 16px; }
+/* ===== Features ===== */
+.features { padding-bottom: 32px; }
+
+.section-header {
+  text-align: center;
+  margin-bottom: 40px;
+}
 
 .section-title {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
+  color: var(--color-text);
+}
+
+.section-subtitle {
+  font-size: 16px;
+  color: var(--color-text-secondary);
 }
 
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 20px;
 }
 
 .feature-card {
-  padding: 28px 24px;
+  padding: 32px 28px;
   background: var(--color-surface);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   border: 1px solid var(--color-border);
   transition: all var(--transition);
 }
 
 .feature-card:hover {
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-xl);
   border-color: transparent;
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 }
 
 .feature-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-md);
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
-.feature-icon.violet { background: var(--color-primary-bg); color: var(--color-primary); }
-.feature-icon.emerald { background: var(--color-success-light); color: var(--color-success); }
-.feature-icon.amber { background: var(--color-warning-light); color: var(--color-warning); }
-.feature-icon.rose { background: var(--color-danger-light); color: var(--color-danger); }
-.feature-icon.sky { background: #e0f2fe; color: #0284c7; }
-.feature-icon.slate { background: #f1f5f9; color: #475569; }
+.feature-icon.violet  { background: var(--color-primary-50);  color: var(--color-primary-600); }
+.feature-icon.emerald { background: var(--color-success-50);  color: var(--color-success-600); }
+.feature-icon.amber   { background: var(--color-warning-50);  color: var(--color-warning-600); }
+.feature-icon.rose    { background: var(--color-danger-50);   color: var(--color-danger-600); }
+.feature-icon.sky     { background: #f0f9ff; color: #0284c7; }
+.feature-icon.slate   { background: #f8fafc; color: #475569; }
+
+html.dark .feature-icon.violet  { background: rgba(124,90,228,0.12);  color: var(--color-primary-400); }
+html.dark .feature-icon.emerald { background: rgba(16,185,129,0.12);  color: var(--color-success-400); }
+html.dark .feature-icon.amber   { background: rgba(245,158,11,0.12);  color: var(--color-warning-400); }
+html.dark .feature-icon.rose    { background: rgba(239,68,68,0.12);   color: var(--color-danger-400); }
+html.dark .feature-icon.sky     { background: rgba(56,189,248,0.12);  color: #38bdf8; }
+html.dark .feature-icon.slate   { background: rgba(148,163,184,0.12); color: #94a3b8; }
 
 .feature-title {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+  color: var(--color-text);
 }
 
 .feature-desc {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--color-text-secondary);
   line-height: 1.65;
 }
 
 @media (max-width: 768px) {
+<<<<<<< HEAD
   .hero-title { font-size: 32px; }
+=======
+  .hero {
+    padding: 40px 0 36px;
+  }
+  .hero-title { font-size: 34px; }
+  .hero-desc { font-size: 16px; }
+  .stats-row { grid-template-columns: 1fr; }
+>>>>>>> 752cc61 (feat: 前端书架重构、后端安全加固与部署文档更新)
   .feature-grid { grid-template-columns: 1fr; }
   .hero-actions { flex-direction: column; align-items: center; }
 }
