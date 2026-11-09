@@ -30,4 +30,18 @@ public interface BookMapper extends BaseMapper<Book> {
     @Update("UPDATE books SET available_copies = available_copies - 1 " +
             "WHERE id = #{bookId} AND available_copies > 0")
     int decrementAvailableCopies(@Param("bookId") Long bookId);
+
+    /**
+     * 原子恢复可用副本数
+     * <p>
+     * 归还图书时使用，避免“先查询再写回”导致的并发丢失更新；
+     * 同时通过 available_copies &lt; total_copies 条件防止库存被加到超过总馆藏。
+     * </p>
+     *
+     * @param bookId 图书 ID
+     * @return 更新成功的行数（0 表示图书不存在或库存已满）
+     */
+    @Update("UPDATE books SET available_copies = available_copies + 1 " +
+            "WHERE id = #{bookId} AND available_copies < total_copies")
+    int incrementAvailableCopies(@Param("bookId") Long bookId);
 }

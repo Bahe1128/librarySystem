@@ -1,11 +1,14 @@
 package com.library.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.library.entity.BorrowRecord;
 import com.library.entity.User;
+import com.library.mapper.BorrowRecordMapper;
 import com.library.mapper.UserMapper;
 import com.library.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
@@ -24,13 +27,16 @@ import java.util.List;
 public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
+    private final BorrowRecordMapper borrowRecordMapper;
     private final PasswordEncoder passwordEncoder;
 
     /**
      * 构造方法注入
      */
-    public UserServiceImpl(UserMapper userMapper, PasswordEncoder passwordEncoder) {
+    public UserServiceImpl(UserMapper userMapper, BorrowRecordMapper borrowRecordMapper,
+                           PasswordEncoder passwordEncoder) {
         this.userMapper = userMapper;
+        this.borrowRecordMapper = borrowRecordMapper;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -133,16 +139,35 @@ public class UserServiceImpl implements UserService {
 
     /**
      * 删除用户
-     * 不允许删除管理员账号（保护系统安全）
+     * <p>
+     * 规则：
+     * 1. 不允许删除管理员账号；
+     * 2. 存在未归还图书时拒绝删除，避免产生无主的在借记录；
+     * 3. 已归还的历史借阅记录随用户一并删除，避免外键约束阻止删除。
+     * </p>
      *
      * @param id 用户 ID
-     * @throws RuntimeException 用户不存在或尝试删除管理员
+     * @throws RuntimeException 用户不存在 / 尝试删除管理员 / 存在未归还图书
      */
     @Override
+    @Transactional
     public void delete(Long id) {
         User user = userMapper.selectById(id);
         if (user == null) throw new RuntimeException("用户不存在");
         if ("admin".equals(user.getRole())) throw new RuntimeException("无法删除管理员账号");
+
+        // 存在未归还的借阅记录时拒绝删除
+        Long activeBorrows = borrowRecordMapper.selectCount(
+                new LambdaQueryWrapper<BorrowRecord>()
+                        .eq(BorrowRecord::getUserId, id)
+                        .eq(BorrowRecord::getStatus, "borrowed"));
+        if (activeBorrows != null && activeBorrows > 0) {
+            throw new RuntimeException("该用户存在未归还的图书，无法删除");
+        }
+
+        // 删除已归还的历史记录，避免 borrow_records 外键阻止用户删除
+        borrowRecordMapper.delete(
+                new LambdaQueryWrapper<BorrowRecord>().eq(BorrowRecord::getUserId, id));
         userMapper.deleteById(id);
     }
 }

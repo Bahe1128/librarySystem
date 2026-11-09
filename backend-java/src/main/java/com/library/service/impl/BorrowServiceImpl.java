@@ -22,7 +22,8 @@ import java.util.*;
  * <p>
  * 实现借阅和归还的核心业务逻辑，包含以下安全/业务保障：
  * <ul>
- *   <li><b>悲观行锁</b>：借书时 SELECT ... FOR UPDATE 锁定图书记录，防止并发超卖</li>
+ *   <li><b>用户行锁</b>：借书时锁定用户记录，串行化同一用户的并发借阅，保证借阅上限检查准确</li>
+ *   <li><b>原子扣减库存</b>：条件 UPDATE 防止并发超卖</li>
  *   <li><b>借阅上限</b>：每位用户最多同时借阅指定册数（可配置）</li>
  *   <li><b>应还日期</b>：借书时自动计算应还日期，逾期未还将标记为逾期</li>
  * </ul>
@@ -53,32 +54,47 @@ public class BorrowServiceImpl implements BorrowService {
     /**
      * 借阅图书
      * <p>
-     * 执行流程：① 检查用户借阅数量上限 → ② 悲观锁锁定图书记录 →
-     * ③ 校验库存 → ④ 创建借阅记录（含应还日期） → ⑤ 扣减库存。
-     * 行锁在事务提交后自动释放，阻塞并发请求，防止超卖。
+     * 执行流程：① 锁定用户记录（串行化同一用户的并发借阅）→ ② 检查借阅上限 →
+     * ③ 校验图书存在 → ④ 原子扣减库存 → ⑤ 创建借阅记录（含应还日期）。
+     * 用户行锁在事务提交后自动释放；库存通过条件 UPDATE 原子扣减，防止超卖。
      * </p>
      *
      * @param userId 借阅用户 ID
      * @param bookId 图书 ID
      * @return 创建的借阅记录
-     * @throws RuntimeException 超过借阅上限 / 图书不存在 / 无可用副本
+     * @throws RuntimeException 用户不存在 / 超过借阅上限 / 图书不存在 / 无可用副本
      */
     @Override
     @Transactional
     public BorrowRecord borrow(Long userId, Long bookId) {
-        // 检查图书是否存在
+        // ① 锁定用户行：同一用户的并发借阅在此串行化，避免同时通过上限检查
+        User user = userMapper.selectByIdForUpdate(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+
+        // ② 检查借阅上限：统计该用户当前未归还的借阅记录数
+        Long borrowedCount = borrowRecordMapper.selectCount(
+                new LambdaQueryWrapper<BorrowRecord>()
+                        .eq(BorrowRecord::getUserId, userId)
+                        .eq(BorrowRecord::getStatus, "borrowed"));
+        if (borrowedCount != null && borrowedCount >= maxBorrowCount) {
+            throw new RuntimeException("借阅已达上限（最多同时借阅 " + maxBorrowCount + " 本）");
+        }
+
+        // ③ 检查图书是否存在
         Book book = bookMapper.selectById(bookId);
         if (book == null) {
             throw new RuntimeException("图书不存在或无可用副本");
         }
 
-        // 原子扣减库存：仅当有可用副本时才成功，防止并发借阅时超借
+        // ④ 原子扣减库存：仅当有可用副本时才成功，防止并发借阅时超借
         int affected = bookMapper.decrementAvailableCopies(bookId);
         if (affected == 0) {
             throw new RuntimeException("图书不存在或无可用副本");
         }
 
-        // ③ 创建借阅记录，自动计算应还日期
+        // ⑤ 创建借阅记录，自动计算应还日期
         BorrowRecord record = new BorrowRecord();
         record.setUserId(userId);
         record.setBookId(bookId);
@@ -132,14 +148,11 @@ public class BorrowServiceImpl implements BorrowService {
 
         // 更新记录为已归还
         record.setStatus("returned");
-        record.setReturnDate(now);
+        record.setReturnDate(LocalDateTime.now());
         borrowRecordMapper.updateById(record);
 
-        Book book = bookMapper.selectById(record.getBookId());
-        if (book != null) {
-            book.setAvailableCopies(book.getAvailableCopies() + 1);
-            bookMapper.updateById(book);
-        }
+        // 原子恢复库存：避免并发归还时的读—改—写丢失更新，且不超过总馆藏数
+        bookMapper.incrementAvailableCopies(record.getBookId());
     }
 
     @Override

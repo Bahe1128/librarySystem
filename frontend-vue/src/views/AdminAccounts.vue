@@ -218,12 +218,12 @@ async function handleSubmit() {
   }
 }
 
-// 删除用户（会同时删除该用户的借阅记录）
+// 删除用户（存在未归还图书时拒绝；已归还记录一并删除）
 async function handleDelete(id) {
   try {
     // 弹出确认对话框，提醒用户删除的后果
     await ElMessageBox.confirm(
-      '确定要删除此用户吗？这将同时删除该用户的所有借阅记录。',
+      '确定要删除此用户吗？该用户的已归还借阅记录会一并删除；若存在未归还的图书，则无法删除。',
       '确认删除',
       { confirmButtonText: '删除', cancelButtonText: '取消' }
     )

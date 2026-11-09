@@ -79,15 +79,26 @@ public class AuthController {
 | `@AuthenticationPrincipal` | 注入 `UserPrincipal` | Spring Security 专属，直接获取当前登录用户信息 |
 | `@Valid` | 配合 `@RequestBody` | 触发 Jakarta Validation 校验（`@NotBlank`、`@NotNull`、`@Size` 等） |
 
-### 示例：一个接口同时用了四种
+### 示例：参数注解的组合使用
+
+项目里的 [BorrowController.java](backend-java/src/main/java/com/library/controller/BorrowController.java)：
+
+```java
+@PostMapping
+public Result<?> borrow(
+        @AuthenticationPrincipal UserPrincipal user,   // 当前登录用户（从 JWT 解析而来）
+        @Valid @RequestBody BorrowRequest request      // JSON 请求体 + 参数校验
+) {
+    BorrowRecord record = borrowService.borrow(user.getId(), request.getBookId());
+    return Result.success(record);
+}
+```
+
+而 [BookController.java](backend-java/src/main/java/com/library/controller/BookController.java) 的 `update` 用了 `@PathVariable` + `@RequestBody`：
 
 ```java
 @PutMapping("/{id}")
-public Result<Book> update(
-        @PathVariable Long id,                     // URL 路径参数
-        @RequestBody Book book,                    // JSON 请求体
-        @AuthenticationPrincipal UserPrincipal user // 当前登录用户
-) {
+public Result<Book> update(@PathVariable Long id, @RequestBody Book book) {
     ...
 }
 ```
@@ -102,12 +113,25 @@ public Result<Book> update(
 @Service                              // 标记为业务层 Bean
 public class BorrowServiceImpl implements BorrowService {
 
+    @Value("${library.max-borrow-count}")   // 从 application.yml 注入配置
+    private int maxBorrowCount;
+
+    @Override
     @Transactional                    // 开启事务
     public BorrowRecord borrow(Long userId, Long bookId) {
-        // 创建借阅记录 + 扣减库存 → 要么全成功，要么全回滚
-        bookMapper.updateById(book);          // 减库存
-        borrowRecordMapper.insert(record);    // 建记录
-        // 任何一步失败，前面的操作自动回滚
+        // ① 锁定用户行：同一用户的并发借阅在此串行化
+        User user = userMapper.selectByIdForUpdate(userId);
+        // ② 检查借阅上限
+        Long borrowedCount = borrowRecordMapper.selectCount(...);
+        if (borrowedCount != null && borrowedCount >= maxBorrowCount)
+            throw new RuntimeException("借阅已达上限");
+        // ③ 原子扣减库存：条件 UPDATE，防并发超卖
+        int affected = bookMapper.decrementAvailableCopies(bookId);
+        if (affected == 0) throw new RuntimeException("无可用副本");
+        // ④ 创建借阅记录（含应还日期）
+        borrowRecordMapper.insert(record);
+        // 任何一步抛异常，前面的操作自动回滚
+        return record;
     }
 }
 ```
@@ -117,6 +141,7 @@ public class BorrowServiceImpl implements BorrowService {
 - `@Service` 本质跟 `@Component` 一样，只是语义上区分层级（Controller → Service → Mapper）
 - `@Transactional` 通过 **AOP 代理** 实现：方法执行前开启事务 → 正常返回则提交 → 抛出 RuntimeException 则回滚
 - **注意：** 只有通过代理对象调用的方法事务才生效。同类内部直接调用（`this.xxx()`）不走代理，事务不会生效
+- `@Value("${key}")` 把 `application.yml` 里的配置注入字段，项目用它控制借阅期限（`borrow-duration-days`）和借阅上限（`max-borrow-count`）
 
 ---
 
@@ -136,13 +161,24 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        // 参数 HttpSecurity 会自动注入
-        http.csrf().disable()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())              // 前后端分离 + JWT，无需 CSRF
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/books/**").permitAll()
+                .requestMatchers("/api/books/**").hasRole("admin")
+                .requestMatchers("/api/users/**").hasRole("admin")
+                .anyRequest().authenticated()
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }
 ```
+
+当前 `SecurityConfig` 一共注册了 **4 个 `@Bean`**：`filterChain`、`passwordEncoder`、`authenticationManager`、`corsConfigurationSource`。
 
 ### `@Bean` vs `@Component` 的区别
 
@@ -264,12 +300,13 @@ http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilt
 
 ### `BaseMapper<T>`
 
-你的 [UserMapper.java](backend-java/src/main/java/com/library/mapper/UserMapper.java)、[BookMapper.java](backend-java/src/main/java/com/library/mapper/BookMapper.java)：
+你的 [UserMapper.java](backend-java/src/main/java/com/library/mapper/UserMapper.java)、[BookMapper.java](backend-java/src/main/java/com/library/mapper/BookMapper.java)、[BorrowRecordMapper.java](backend-java/src/main/java/com/library/mapper/BorrowRecordMapper.java) 都继承了它：
 
 ```java
 @Mapper
 public interface BookMapper extends BaseMapper<Book> {
-    // 空接口，但自动继承了以下方法：
+    // 自动继承 BaseMapper 的 CRUD 方法
+    // 另外还自定义了带并发控制语义的 SQL（见下面的 @Update）
 }
 ```
 
@@ -299,6 +336,29 @@ wrapper.eq(User::getUsername, "admin")         // WHERE username = 'admin'
 userMapper.selectList(wrapper);
 ```
 
+### 自定义 SQL：`@Select` / `@Update` / `@Param`
+
+`BaseMapper` 的方法不够用时，可以直接在 Mapper 接口方法上写注解 SQL，无需 XML：
+
+```java
+// UserMapper.java —— 悲观行锁，借书时串行化同一用户的并发请求
+@Select("SELECT * FROM users WHERE id = #{id} FOR UPDATE")
+User selectByIdForUpdate(@Param("id") Long id);
+
+// BookMapper.java —— 条件 UPDATE，原子扣减库存，防止并发超卖
+@Update("UPDATE books SET available_copies = available_copies - 1 " +
+        "WHERE id = #{bookId} AND available_copies > 0")
+int decrementAvailableCopies(@Param("bookId") Long bookId);
+```
+
+| 注解 | 作用 |
+|------|------|
+| `@Select` | 查询 SQL，返回值映射为对象 / 列表 / 分页对象 |
+| `@Update` | 更新 SQL，返回值为受影响行数 |
+| `@Param("name")` | 给方法参数起名，SQL 中用 `#{name}` 引用（多参数时必须显式指定） |
+
+这套组合是项目并发安全的核心：**用户行锁**保证借阅上限检查准确，**条件 UPDATE** 保证库存不会被扣成负数。
+
 ---
 
 ## 总结：项目中的 Spring Bean 全景图
@@ -307,8 +367,8 @@ userMapper.selectList(wrapper);
 LibraryApplication (@SpringBootApplication)     ← 启动入口
     │
     ├── config/
-    │   ├── SecurityConfig        @Configuration + 3个@Bean
-    │   ├── MyBatisPlusConfig     @Configuration + 2个@Bean + MetaObjectHandler
+    │   ├── SecurityConfig        @Configuration + 4个@Bean + @EnableWebSecurity
+    │   ├── MyBatisPlusConfig     @Configuration + 1个@Bean + 实现 MetaObjectHandler
     │   └── DataInitializer       @Component + CommandLineRunner
     │
     ├── security/
@@ -334,7 +394,12 @@ LibraryApplication (@SpringBootApplication)     ← 启动入口
     │   └── UserServiceImpl       @Service
     │
     ├── mapper/                   ← 数据访问
-    │   └── 3个 *Mapper           @Mapper + extends BaseMapper（MyBatis-Plus 自动生成代理）
+    │   └── 3个 *Mapper           @Mapper + extends BaseMapper（自动生成代理）
+    │                             └── 自定义 @Select / @Update（行锁、原子扣减库存）
+    │
+    ├── dto/                      ← 请求/响应数据传输对象
+    │   ├── LoginRequest/LoginResponse、RegisterRequest
+    │   └── BorrowRequest、ReturnRequest（配合 @Valid 校验）
     │
     └── common/                   ← 通用组件
         ├── Result                POJO（统一响应封装）
@@ -356,13 +421,17 @@ LibraryApplication (@SpringBootApplication)     ← 启动入口
 | `@RequestParam` | 绑定查询参数 | Controller 方法参数 |
 | `@RequestBody` | 绑定 JSON 请求体 | Controller 方法参数 |
 | `@Valid` | 触发 Jakarta Validation 校验 | Controller 方法参数 |
+| `@AuthenticationPrincipal` | 注入当前登录用户（`UserPrincipal`） | Controller 方法参数 |
 | `@Service` | 标记业务层 Bean | Service |
 | `@Transactional` | 声明事务（AOP 代理实现） | Service 方法 |
 | `@Configuration` | 标记配置类 | Config |
 | `@Bean` | 声明方法返回值为 Spring Bean | Config 方法 |
+| `@EnableWebSecurity` | 启用 Spring Security Web 支持 | Config |
 | `@Component` | 通用 Bean 注册 | 任意 |
 | `@Mapper` | MyBatis-Plus 数据访问接口 | Mapper |
+| `@Select` / `@Update` | 在 Mapper 方法上直接写 SQL | Mapper 方法 |
+| `@Param("name")` | 为 SQL 中的 `#{name}` 绑定参数 | Mapper 方法参数 |
 | `@RestControllerAdvice` | 全局异常处理 + JSON 响应 | Common |
 | `@ExceptionHandler` | 指定捕获的异常类型 | Common 方法 |
-| `@Value("${key}")` | 读取 application.properties 配置值 | 任意 |
+| `@Value("${key}")` | 读取 application.yml / properties 配置值 | 任意 |
 | `@PostConstruct` | Bean 初始化后回调 | 任意方法 |
