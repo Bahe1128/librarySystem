@@ -100,18 +100,25 @@
   --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition:      200ms cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---- Type scale ---- */
+  --text-xl:  20px;
+  --text-2xl: 28px;
+  --text-3xl: 34px;
+  --text-4xl: 52px;
 }
 
 /* ===== Dark Mode ===== */
 html.dark {
-  --color-bg:             #0c0e12;
+  color-scheme: dark;
+  --color-bg:             #0b0d11;
   --color-surface:        #13161d;
-  --color-border:         #1f242f;
+  --color-border:         #232a37;
   --color-border-light:   #181c26;
   --color-border-hover:   #2a3040;
 
   --color-text:           #e8eaef;
-  --color-text-secondary: #8b93a5;
+  --color-text-secondary: #98a0b3;
   --color-text-tertiary:  #5f6a7e;
   --color-text-disabled:  #3a4050;
 
@@ -159,6 +166,8 @@ body {
   background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01";
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -202,6 +211,108 @@ html.dark ::-webkit-scrollbar-thumb:hover {
   font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
 }
 
+/* ===== Card Texture =====
+   统一的卡片底座：柔和阴影 + 顶部 1px 高光，营造细腻层次 */
+.stat-card,
+.feature-card,
+.table-card {
+  position: relative;
+  box-shadow: var(--shadow-xs);
+}
+
+.stat-card::before,
+.feature-card::before,
+.table-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.60), transparent);
+  pointer-events: none;
+}
+
+html.dark .stat-card::before,
+html.dark .feature-card::before,
+html.dark .table-card::before {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+}
+
+/* 卡片悬浮：边框过渡到主色，营造可交互感 */
+.stat-card:hover,
+.feature-card:hover,
+.table-card:hover {
+  border-color: var(--color-primary-200);
+}
+html.dark .stat-card:hover,
+html.dark .feature-card:hover,
+html.dark .table-card:hover {
+  border-color: rgba(155, 132, 237, 0.25);
+}
+
+/* ===== Button Primitives =====
+   全局按钮原语，替代各视图重复的自定义按钮样式 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+  transition: background var(--transition-fast), box-shadow var(--transition-fast),
+              transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.btn-sm {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0px 1px 2px rgba(107, 70, 212, 0.24), 0px 4px 10px rgba(107, 70, 212, 0.10);
+}
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+  color: #fff;
+  box-shadow: 0px 2px 4px rgba(107, 70, 212, 0.28), 0px 8px 16px rgba(107, 70, 212, 0.14);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+.btn-ghost:hover {
+  background: var(--gray-50);
+  color: var(--color-text);
+  border-color: var(--color-border-hover);
+}
+html.dark .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: #fff;
+}
+.btn-danger:hover {
+  background: var(--color-danger-700);
+  color: #fff;
+}
+
+.btn:active { transform: translateY(0) scale(0.985); }
+.btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
 /* ===== Element Plus Overrides =====
    Make Element Plus components feel like Untitled UI */
 
@@ -243,11 +354,17 @@ html.dark .el-table {
 /* Input */
 .el-input__wrapper {
   border-radius: var(--radius-md) !important;
+  min-height: 40px;
+  background: var(--color-surface);
   box-shadow: 0 0 0 1px var(--color-border) !important;
-  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+  transition: box-shadow var(--transition-fast), background var(--transition-fast), border-color var(--transition-fast);
 }
 .el-input__wrapper:hover {
+  background: var(--gray-25);
   box-shadow: 0 0 0 1px var(--color-border-hover) !important;
+}
+html.dark .el-input__wrapper:hover {
+  background: rgba(255, 255, 255, 0.02);
 }
 .el-input.is-focus .el-input__wrapper,
 .el-input__wrapper.is-focus {
@@ -324,4 +441,18 @@ html.dark .el-table {
 /* Tooltip */
 .el-tooltip__trigger:focus-visible {
   outline: none;
+}
+
+/* ===== Reduced Motion =====
+   用户开启"减少动态效果"时，禁用全局动画与过渡 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  html {
+    scroll-behavior: auto !important;
+  }
 }

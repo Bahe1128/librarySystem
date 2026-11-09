@@ -39,8 +39,7 @@
         </div>
       </div>
       <div class="stat-card">
-<<<<<<< HEAD
-        <div class="stat-icon overdue">
+        <div class="stat-icon-wrapper stat-icon-overdue">
           <el-icon :size="22"><WarningFilled /></el-icon>
         </div>
         <div class="stat-info">
@@ -49,10 +48,7 @@
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon users">
-=======
         <div class="stat-icon-wrapper stat-icon-users">
->>>>>>> 752cc61 (feat: 前端书架重构、后端安全加固与部署文档更新)
           <el-icon :size="22"><User /></el-icon>
         </div>
         <div class="stat-info">
@@ -103,12 +99,13 @@ const features = [
 ]
 
 // 组件挂载后获取统计数据
-// 注意：即使获取失败也不影响页面正常展示（统计数据为可选功能）
+// 注意：stats 接口需要登录，未登录访客不请求（避免被 401 重定向踢回登录页）
+// 即使获取失败也不影响页面正常展示（统计数据为可选功能）
 onMounted(async () => {
+  if (!auth.isLoggedIn) return
   try {
-    const res = await statsAPI.getStats()
-    // 将返回的统计数据赋值
-    stats.value = res.data
+    // API 拦截器已解包，res 即统计对象
+    stats.value = await statsAPI.getStats()
   } catch (_) {
     // stats 数据获取失败时静默处理，不影响页面渲染
   }
@@ -224,15 +221,9 @@ html.dark .hero-badge {
 /* ===== Stats ===== */
 .stats-row {
   display: grid;
-<<<<<<< HEAD
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
   margin-bottom: 64px;
-=======
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin-bottom: 80px;
->>>>>>> 752cc61 (feat: 前端书架重构、后端安全加固与部署文档更新)
 }
 
 @media (max-width: 1024px) {
@@ -270,23 +261,18 @@ html.dark .hero-badge {
   flex-shrink: 0;
 }
 
-<<<<<<< HEAD
-.stat-icon.books { background: var(--color-primary-bg); color: var(--color-primary); }
-.stat-icon.borrow { background: var(--color-success-light); color: var(--color-success); }
-.stat-icon.overdue { background: var(--color-danger-light, #fee2e2); color: var(--color-danger, #dc2626); }
-.stat-icon.users { background: var(--color-warning-light); color: var(--color-warning); }
-=======
-.stat-icon-books  { background: var(--color-primary-50); color: var(--color-primary-600); }
-.stat-icon-borrow { background: var(--color-success-50); color: var(--color-success-600); }
-.stat-icon-users  { background: var(--color-warning-50); color: var(--color-warning-600); }
+.stat-icon-books   { background: var(--color-primary-50); color: var(--color-primary-600); }
+.stat-icon-borrow  { background: var(--color-success-50); color: var(--color-success-600); }
+.stat-icon-overdue { background: var(--color-danger-50); color: var(--color-danger-600); }
+.stat-icon-users   { background: var(--color-warning-50); color: var(--color-warning-600); }
 
-html.dark .stat-icon-books  { background: rgba(124,90,228,0.12); color: var(--color-primary-400); }
-html.dark .stat-icon-borrow { background: rgba(16,185,129,0.12); color: var(--color-success-400); }
-html.dark .stat-icon-users  { background: rgba(245,158,11,0.12); color: var(--color-warning-400); }
->>>>>>> 752cc61 (feat: 前端书架重构、后端安全加固与部署文档更新)
+html.dark .stat-icon-books   { background: rgba(124,90,228,0.12); color: var(--color-primary-400); }
+html.dark .stat-icon-borrow  { background: rgba(16,185,129,0.12); color: var(--color-success-400); }
+html.dark .stat-icon-overdue { background: rgba(239,68,68,0.12); color: var(--color-danger-400); }
+html.dark .stat-icon-users   { background: rgba(245,158,11,0.12); color: var(--color-warning-400); }
 
 .stat-info { display: flex; flex-direction: column; }
-.stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; }
+.stat-value { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; font-variant-numeric: tabular-nums; }
 .stat-label { font-size: 14px; color: var(--color-text-secondary); margin-top: 2px; font-weight: 500; }
 
 /* ===== Features ===== */
@@ -368,17 +354,33 @@ html.dark .feature-icon.slate   { background: rgba(148,163,184,0.12); color: #94
   line-height: 1.65;
 }
 
+/* ===== 入场动画：统计卡与功能卡依次浮现 ===== */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.feature-card,
+.stat-card {
+  animation: fade-up 0.5s var(--transition) both;
+}
+.stat-card:nth-child(1) { animation-delay: 0ms; }
+.stat-card:nth-child(2) { animation-delay: 60ms; }
+.stat-card:nth-child(3) { animation-delay: 120ms; }
+.stat-card:nth-child(4) { animation-delay: 180ms; }
+.feature-card:nth-child(1) { animation-delay: 0ms; }
+.feature-card:nth-child(2) { animation-delay: 60ms; }
+.feature-card:nth-child(3) { animation-delay: 120ms; }
+.feature-card:nth-child(4) { animation-delay: 180ms; }
+.feature-card:nth-child(5) { animation-delay: 240ms; }
+.feature-card:nth-child(6) { animation-delay: 300ms; }
+
 @media (max-width: 768px) {
-<<<<<<< HEAD
-  .hero-title { font-size: 32px; }
-=======
   .hero {
     padding: 40px 0 36px;
   }
-  .hero-title { font-size: 34px; }
+  .hero-title { font-size: 32px; }
   .hero-desc { font-size: 16px; }
-  .stats-row { grid-template-columns: 1fr; }
->>>>>>> 752cc61 (feat: 前端书架重构、后端安全加固与部署文档更新)
   .feature-grid { grid-template-columns: 1fr; }
   .hero-actions { flex-direction: column; align-items: center; }
 }

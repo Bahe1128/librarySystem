@@ -1,17 +1,13 @@
 <template>
   <div class="accounts-page">
-    <div class="page-top">
-      <div>
-        <h2 class="page-title">账号管理</h2>
-        <p class="page-desc">管理普通用户的账号信息</p>
-      </div>
-      <button class="add-btn" @click="openDialog(null)">
+    <PageHeader title="账号管理" desc="管理普通用户的账号信息">
+      <button class="btn btn-primary" @click="openDialog(null)">
         <el-icon :size="16"><Plus /></el-icon>
         添加用户
       </button>
-    </div>
+    </PageHeader>
 
-    <div class="table-card">
+    <TableCard>
       <el-table :data="users" v-loading="loading" style="width: 100%" table-layout="auto">
         <el-table-column prop="id" label="ID" width="70" align="center" />
         <el-table-column prop="username" label="账号" min-width="120">
@@ -48,15 +44,14 @@
           </template>
         </el-table-column>
       </el-table>
-    </div>
+    </TableCard>
 
-    <div class="empty-state" v-if="!loading && users.length === 0">
-      <div class="empty-icon">
-        <el-icon :size="40"><User /></el-icon>
-      </div>
-      <h3>暂无用户</h3>
-      <p>还没有普通用户账号</p>
-    </div>
+    <EmptyState
+      v-if="!loading && users.length === 0"
+      icon="User"
+      title="暂无用户"
+      desc="还没有普通用户账号"
+    />
 
     <el-dialog
       v-model="dialogVisible"
@@ -105,9 +100,9 @@
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <button class="dialog-btn cancel" @click="dialogVisible = false">取消</button>
-          <button class="dialog-btn confirm" :disabled="submitting" @click="handleSubmit">
-            <el-icon v-if="submitting" :size="15"><Loading /></el-icon>
+          <button class="btn btn-ghost" @click="dialogVisible = false">取消</button>
+          <button class="btn btn-primary" :disabled="submitting" @click="handleSubmit">
+            <el-icon v-if="submitting" :size="15" class="is-loading"><Loading /></el-icon>
             {{ submitting ? '提交中...' : '确认' }}
           </button>
         </div>
@@ -124,6 +119,10 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { userAPI } from '../api'
+import { getErrMsg } from '../utils/error'
+import PageHeader from '../components/PageHeader.vue'
+import TableCard from '../components/TableCard.vue'
+import EmptyState from '../components/EmptyState.vue'
 
 // 用户列表数据
 const users = ref([])
@@ -162,9 +161,9 @@ async function fetchUsers() {
   try {
     const res = await userAPI.getAll()
     // getAll 返回的是数组，直接赋值
-    users.value = res.data
-  } catch (_) {
-    ElMessage.error('获取用户列表失败')
+    users.value = res
+  } catch (e) {
+    ElMessage.error(getErrMsg(e, '获取用户列表失败'))
   } finally {
     loading.value = false
   }
@@ -213,7 +212,7 @@ async function handleSubmit() {
     dialogVisible.value = false
     fetchUsers()
   } catch (e) {
-    ElMessage.error(e.message || '操作失败')
+    ElMessage.error(getErrMsg(e, '操作失败'))
   } finally {
     submitting.value = false
   }
@@ -233,7 +232,7 @@ async function handleDelete(id) {
     fetchUsers()
   } catch (e) {
     // 用户取消操作或删除失败
-    if (e !== 'cancel') ElMessage.error(e.message || '删除失败')
+    if (e !== 'cancel') ElMessage.error(getErrMsg(e, '删除失败'))
   }
 }
 
@@ -243,56 +242,6 @@ onMounted(fetchUsers)
 
 <style scoped>
 .accounts-page { max-width: 1100px; margin: 0 auto; }
-
-.page-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 28px;
-}
-
-.page-title {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  margin-bottom: 6px;
-  color: var(--color-text);
-}
-.page-desc { font-size: 15px; color: var(--color-text-secondary); }
-
-/* Add Button */
-.add-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  padding: 10px 22px;
-  border: none;
-  border-radius: var(--radius-lg);
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
-  letter-spacing: -0.01em;
-  box-shadow: 0px 1px 2px rgba(107, 70, 212, 0.20);
-}
-
-.add-btn:hover {
-  background: var(--color-primary-hover);
-  box-shadow: 0px 2px 4px rgba(107, 70, 212, 0.28);
-}
-
-/* Table Card */
-.table-card {
-  background: var(--color-surface);
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--color-border);
-  overflow: hidden;
-  box-shadow: var(--shadow-xs);
-}
 
 .username-cell { font-weight: 600; color: var(--color-text); }
 
@@ -334,62 +283,10 @@ html.dark .action-btn.edit:hover   { background: rgba(124,90,228,0.20); }
 html.dark .action-btn.delete { background: rgba(239,68,68,0.12); color: var(--color-danger-400); }
 html.dark .action-btn.delete:hover { background: rgba(239,68,68,0.20); }
 
-/* Empty State */
-.empty-state {
-  text-align: center;
-  padding: 80px 20px;
-  color: var(--color-text-secondary);
-}
-.empty-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: var(--color-border-light);
-  color: var(--color-text-tertiary);
-  margin-bottom: 20px;
-}
-.empty-state h3 { font-size: 17px; font-weight: 600; margin-bottom: 6px; color: var(--color-text); }
-.empty-state p { font-size: 14px; }
-
 /* Dialog */
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
 }
-
-.dialog-btn {
-  padding: 9px 22px;
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  letter-spacing: -0.01em;
-}
-
-.dialog-btn.cancel {
-  background: var(--color-border-light);
-  color: var(--color-text-secondary);
-}
-.dialog-btn.cancel:hover { background: var(--color-border); color: var(--color-text); }
-
-.dialog-btn.confirm {
-  background: var(--color-primary);
-  color: #fff;
-  box-shadow: 0px 1px 2px rgba(107, 70, 212, 0.20);
-}
-.dialog-btn.confirm:hover:not(:disabled) {
-  background: var(--color-primary-hover);
-  box-shadow: 0px 2px 4px rgba(107, 70, 212, 0.28);
-}
-.dialog-btn.confirm:disabled { opacity: 0.55; cursor: not-allowed; }
 </style>

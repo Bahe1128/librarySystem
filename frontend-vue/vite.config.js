@@ -3,11 +3,19 @@
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+// ESM 环境下使用 fileURLToPath 计算项目内绝对路径，用于配置 '@' 别名
+import { fileURLToPath, URL } from 'node:url'
 
 // 导出 Vite 配置（defineConfig 提供 TypeScript 智能提示）
 export default defineConfig({
   // 插件列表：使用 Vue 3 单文件组件(SFC)编译插件
   plugins: [vue()],
+  // 路径别名：'@' 指向 src 目录，新增文件可使用 '@/xxx' 导入
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  },
   // 开发服务器配置
   server: {
     // 前端开发服务器端口号

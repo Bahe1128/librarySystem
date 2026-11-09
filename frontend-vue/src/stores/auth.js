@@ -24,7 +24,9 @@ export const useAuthStore = defineStore('auth', () => {
   // --- 操作方法 (actions) ---
 
   // 设置认证信息：保存 token 和用户信息到内存和本地存储
+  // 防御性检查：没有 token 视为认证失败，杜绝"失败被当成功写入本地存储"
   function setAuth(newToken, newUser) {
+    if (!newToken) throw new Error('登录失败：未获取到凭证')
     token.value = newToken
     user.value = newUser
     // 持久化到 localStorage，确保刷新页面不丢失登录状态
@@ -41,14 +43,16 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // 登录操作：调用后端 API 进行认证，成功后将结果保存
+  // API 拦截器已解包，res 即 { token, user }
   async function login(username, password) {
     const res = await authAPI.login(username, password)
     // 调用 setAuth 保存登录凭证
-    setAuth(res.data.token, res.data.user)
-    return res.data
+    setAuth(res.token, res.user)
+    return res
   }
 
   // 注册操作：调用后端 API 注册新用户（注册后需手动登录）
+  // API 拦截器已解包，成功返回 { id, username }，失败会 reject
   async function register(username, password) {
     return await authAPI.register(username, password)
   }

@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn compile *)",
+      "Skill(run)",
+      "Skill(run:*)",
+      "Bash(mvn spring-boot:run -q)",
+      "Bash(npm run *)",
+      "Bash(where.exe npm *)",
+      "Bash(cmd.exe /c \"where npm\")",
+      "Read(//c/Program Files/nodejs/**)",
+      "Read(//c/Users/梦涯/AppData/Roaming/**)",
+      "Bash(\"/c/Program Files/nodejs/npm.cmd\" run dev)",
+      "Bash(curl -s http://localhost:5000/api/stats -H \"Authorization: Bearer test\")",
+      "Bash(curl -s http://localhost:5000/)",
+      "Bash(tasklist //FI \"IMAGENAME eq java.exe\")",
+      "Bash(PATH='/c/Program Files/nodejs:__TRACKED_VAR__' node --version)",
+      "Bash(npx vite *)",
+      "Bash(curl -s http://localhost:5173/)",
+      "Bash(PATH='/c/Program Files/nodejs:__TRACKED_VAR__' ./node_modules/.bin/vite --host)",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '{\"username\":\"user1\",\"password\":\"123456\"}')",
+      "Bash(curl -s http://localhost:5000/api/stats -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJ1c2VyMSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzQ5NTE5NDI4LCJleHAiOjE3NDk1MjMwMjh9.tgvCfjW1_t9tsLtEXVx_olqxDus2cyQJfYi4bx0bU5c')",
+      "Bash(curl -s http://localhost:5000/api/stats -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzMyIsInVzZXJuYW1lIjoidXNlcjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc4MTA1ODA1NiwiZXhwIjoxNzgxMTQ0NDU2fQ.oKpJdmYoT_YxnmRI3udlWAJ_twkMj-42x6_0GN4_Lk0')",
+      "Bash(curl -s 'http://localhost:5000/api/borrow?page=1&pageSize=3' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzMyIsInVzZXJuYW1lIjoidXNlcjEiLCJyb2xlIjoidXNlciIsImlhdCI6MTc4MTA1ODA1NiwiZXhwIjoxNzgxMTQ0NDU2fQ.oKpJdmYoT_YxnmRI3udlWAJ_twkMj-42x6_0GN4_Lk0')",
+      "Bash(taskkill //F //PID 43080)",
+      "Bash(curl -s http://localhost:5000/api/stats -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwidXNlcm5hbWUiOiJ1c2VyMSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzgxMDU4MTY0LCJleHAiOjE3ODExNDQ1NjR9.q0Igee69vKdNIvfraxsg43dffK9R6Z0MqNoOj6hUbSo')",
+      "Bash(curl -s 'http://localhost:5000/api/borrow?page=1&pageSize=3' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwidXNlcm5hbWUiOiJ1c2VyMSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzgxMDU4MTY0LCJleHAiOjE3ODExNDQ1NjR9.q0Igee69vKdNIvfraxsg43dffK9R6Z0MqNoOj6hUbSo')",
+      "Bash(curl -s -X POST http://localhost:5000/api/borrow -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIyIiwidXNlcm5hbWUiOiJ1c2VyMSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzgxMDU4MTY0LCJleHAiOjE3ODExNDQ1NjR9.q0Igee69vKdNIvfraxsg43dffK9R6Z0MqNoOj6hUbSo' -H 'Content-Type: application/json' -d '{\"bookId\": 100}')",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H \"Content-Type: application/json\" -d '{\"username\":\"admin\",\"password\":\"admin123\"}')",
+      "Bash(curl -s 'http://localhost:5000/api/borrow?page=1&pageSize=3' -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc4MTA1ODI1MywiZXhwIjoxNzgxMTQ0NjUzfQ.MhIP-1c-vYQzjV-hYdEuYpFViVcivzKRa47WBYinBd0')",
+      "Bash(curl -s http://localhost:5000/api/users -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc4MTA1ODI1MywiZXhwIjoxNzgxMTQ0NjUzfQ.MhIP-1c-vYQzjV-hYdEuYpFViVcivzKRa47WBYinBd0')",
+      "Bash(curl -s http://localhost:5000/api/stats -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc4MTA1ODI1MywiZXhwIjoxNzgxMTQ0NjUzfQ.MhIP-1c-vYQzjV-hYdEuYpFViVcivzKRa47WBYinBd0\")",
+      "Bash(curl -s \"http://localhost:5173/api/stats\" -H \"Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc4MTA1ODI1MywiZXhwIjoxNzgxMTQ0NjUzfQ.MhIP-1c-vYQzjV-hYdEuYpFViVcivzKRa47WBYinBd0\")",
+      "Read(//c/Users/梦涯/AppData/Local/ms-playwright/**)",
+      "Bash(curl -s http://localhost:5173/borrow-records)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'feat: 应还日期+逾期检测、借阅上限、借书行锁 *)"
+    ]
+  }
+}
