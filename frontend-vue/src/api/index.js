@@ -101,7 +101,13 @@ export const borrowAPI = {
   // 借阅图书：传入图书 ID
   borrow: (bookId) => request.post('/borrow', { bookId }),
   // 获取借阅记录列表（分页），管理员可查看所有用户的记录
-  getRecords: (page = 1, pageSize = 10) => request.get('/borrow', { params: { page, pageSize } }),
+  // filters 支持 { title, username }，为空则不参与筛选
+  getRecords: (page = 1, pageSize = 10, filters = {}) => {
+    const params = { page, pageSize }
+    if (filters.title) params.title = filters.title
+    if (filters.username) params.username = filters.username
+    return request.get('/borrow', { params })
+  },
   // 归还图书：传入借阅记录 ID
   returnBook: (recordId) => request.post('/borrow/return', { recordId })
 }

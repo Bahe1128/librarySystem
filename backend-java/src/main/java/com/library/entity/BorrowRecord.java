@@ -40,6 +40,9 @@ public class BorrowRecord {
     /** 图书作者（虚拟字段，来自 books 表） */
     @TableField(exist = false)
     private String author;
+    /** 图书类别（虚拟字段，来自 books 表） */
+    @TableField(exist = false)
+    private String category;
     /** 借阅用户名（虚拟字段，来自 users 表） */
     @TableField(exist = false)
     private String username;
@@ -68,6 +71,8 @@ public class BorrowRecord {
     public void setTitle(String title) { this.title = title; }
     public String getAuthor() { return author; }
     public void setAuthor(String author) { this.author = author; }
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
     public Boolean getOverdue() { return overdue; }

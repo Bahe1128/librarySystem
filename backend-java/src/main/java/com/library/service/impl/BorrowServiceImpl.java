@@ -107,16 +107,17 @@ public class BorrowServiceImpl implements BorrowService {
     }
 
     @Override
-    public PageResult<BorrowRecord> findByUserId(Long userId, int page, int pageSize) {
+    public PageResult<BorrowRecord> findByUserId(Long userId, String title, String username,
+                                                 int page, int pageSize) {
         Page<BorrowRecord> p = new Page<>(page, pageSize);
-        Page<BorrowRecord> result = borrowRecordMapper.findByUserIdWithBookInfo(p, userId);
+        Page<BorrowRecord> result = borrowRecordMapper.findByUserIdWithBookInfo(p, userId, title, username);
         return new PageResult<>(result.getRecords(), result.getTotal(), result.getCurrent(), result.getSize());
     }
 
     @Override
-    public PageResult<BorrowRecord> findAll(int page, int pageSize) {
+    public PageResult<BorrowRecord> findAll(String title, String username, int page, int pageSize) {
         Page<BorrowRecord> p = new Page<>(page, pageSize);
-        Page<BorrowRecord> result = borrowRecordMapper.findAllWithBookInfo(p);
+        Page<BorrowRecord> result = borrowRecordMapper.findAllWithBookInfo(p, title, username);
         return new PageResult<>(result.getRecords(), result.getTotal(), result.getCurrent(), result.getSize());
     }
 

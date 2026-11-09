@@ -2,6 +2,40 @@
   <div class="records-page">
     <PageHeader title="借阅记录" :desc="isAdmin ? '查看用户的借阅和归还记录' : '查看你的借阅和归还记录'" />
 
+    <!-- 筛选栏：按书名查询；管理员还可按用户名查询 -->
+    <div class="filter-bar">
+      <div class="filter-input">
+        <el-icon :size="16" color="var(--color-text-tertiary)"><Search /></el-icon>
+        <input
+          v-model="filterForm.title"
+          class="filter-field"
+          placeholder="按书名筛选..."
+          @keyup.enter="applyFilters"
+        />
+      </div>
+      <div v-if="isAdmin" class="filter-input">
+        <el-icon :size="16" color="var(--color-text-tertiary)"><User /></el-icon>
+        <input
+          v-model="filterForm.username"
+          class="filter-field"
+          placeholder="按用户名筛选..."
+          @keyup.enter="applyFilters"
+        />
+      </div>
+      <button class="btn btn-primary btn-sm" @click="applyFilters">
+        <el-icon :size="14"><Search /></el-icon>
+        查询
+      </button>
+      <button
+        class="btn btn-ghost btn-sm"
+        :disabled="!filterForm.title && !filterForm.username"
+        @click="resetFilters"
+      >
+        <el-icon :size="14"><RefreshLeft /></el-icon>
+        重置
+      </button>
+    </div>
+
     <TableCard>
       <el-table :data="records" v-loading="loading" style="width: 100%" table-layout="auto">
         <el-table-column prop="title" label="图书名称" min-width="200">
@@ -15,6 +49,12 @@
           </template>
         </el-table-column>
         <el-table-column prop="author" label="作者" min-width="140" />
+        <el-table-column prop="category" label="图书类别" width="120">
+          <template #default="{ row }">
+            <span v-if="row.category" class="category-badge">{{ row.category }}</span>
+            <span v-else class="text-muted">-</span>
+          </template>
+        </el-table-column>
         <el-table-column v-if="isAdmin" prop="username" label="借阅人" min-width="120">
           <template #default="{ row }">
             <span class="user-cell">
@@ -76,8 +116,8 @@
     <EmptyState
       v-if="!loading && records.length === 0"
       icon="FolderOpened"
-      title="暂无借阅记录"
-      desc="去图书列表借阅一本感兴趣的书吧"
+      :title="hasFilter ? '未找到匹配的借阅记录' : '暂无借阅记录'"
+      :desc="hasFilter ? '换个书名或用户名试试' : '去图书列表借阅一本感兴趣的书吧'"
     />
   </div>
 </template>
@@ -87,7 +127,7 @@
 // 普通用户只能看到自己的记录，管理员可以看到所有用户的记录
 // 支持分页展示和归还操作
 
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { borrowAPI } from '../api'
 import { useAuthStore } from '../stores/auth'
@@ -109,18 +149,26 @@ const total = ref(0)
 // 当前页码和每页条数
 const currentPage = ref(1)
 const pageSize = ref(10)
+// 筛选表单（输入框）与已生效的筛选条件（点击查询后同步）
+const filterForm = reactive({ title: '', username: '' })
+const appliedFilters = reactive({ title: '', username: '' })
+// 是否处于筛选状态（用于空状态文案）
+const hasFilter = computed(() => !!(appliedFilters.title || appliedFilters.username))
 
 // 计算属性：判断当前用户是否为管理员
 // 管理员可以看到所有用户的借阅记录，并在表格中显示"借阅人"列
 const isAdmin = computed(() => auth.user?.role === 'admin')
 
-// 获取借阅记录列表（分页）
+// 获取借阅记录列表（分页 + 筛选）
 // 后端会根据当前登录用户的角色自动筛选数据
 // 管理员获取全部记录，普通用户只获取自己的记录
 async function fetchRecords() {
   loading.value = true
   try {
-    const res = await borrowAPI.getRecords(currentPage.value, pageSize.value)
+    const res = await borrowAPI.getRecords(currentPage.value, pageSize.value, {
+      title: appliedFilters.title,
+      username: appliedFilters.username
+    })
     records.value = res.records
     total.value = res.total
   } catch (e) {
@@ -128,6 +176,24 @@ async function fetchRecords() {
   } finally {
     loading.value = false
   }
+}
+
+// 应用筛选：把输入框的值同步到已生效条件，并回到第1页
+function applyFilters() {
+  appliedFilters.title = filterForm.title.trim()
+  appliedFilters.username = isAdmin.value ? filterForm.username.trim() : ''
+  currentPage.value = 1
+  fetchRecords()
+}
+
+// 重置筛选条件
+function resetFilters() {
+  filterForm.title = ''
+  filterForm.username = ''
+  appliedFilters.title = ''
+  appliedFilters.username = ''
+  currentPage.value = 1
+  fetchRecords()
 }
 
 // 页码变化
@@ -159,6 +225,51 @@ onMounted(fetchRecords)
 <style scoped>
 .records-page { max-width: 1100px; margin: 0 auto; }
 
+/* ===== Filter Bar ===== */
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.filter-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 220px;
+  max-width: 340px;
+  height: 40px;
+  padding: 0 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: all var(--transition-fast);
+}
+
+.filter-input:focus-within {
+  border-color: var(--color-primary-300);
+  box-shadow: var(--focus-ring);
+}
+
+.filter-field {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.filter-field::placeholder { color: var(--color-text-tertiary); }
+
+@media (max-width: 640px) {
+  .filter-input { flex-basis: 100%; max-width: none; }
+}
+
 /* Book Cell */
 .book-cell { display: flex; align-items: center; gap: 12px; }
 .book-icon-sm {
@@ -177,6 +288,23 @@ html.dark .book-icon-sm {
   color: var(--color-primary-400);
 }
 .book-name { font-weight: 600; color: var(--color-text); }
+
+/* Category Badge */
+.category-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-50);
+  color: var(--color-primary-700);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+html.dark .category-badge {
+  background: rgba(124, 90, 228, 0.12);
+  color: var(--color-primary-400);
+}
+.text-muted { color: var(--color-text-tertiary); }
 
 /* User Cell */
 .user-cell { display: flex; align-items: center; gap: 8px; }

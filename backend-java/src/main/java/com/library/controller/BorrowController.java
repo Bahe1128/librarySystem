@@ -57,28 +57,33 @@ public class BorrowController {
     }
 
     /**
-     * 查询借阅记录（分页）
-     * GET /api/borrow?page=1&pageSize=10
+     * 查询借阅记录（分页，支持按书名/用户名筛选）
+     * GET /api/borrow?page=1&pageSize=10&title=Java&username=admin
      * <p>
      * 管理员角色返回全库记录，普通用户只看自己的。
+     * title、username 均为可选参数，为空时不过滤。
      * </p>
      *
      * @param user     当前登录用户
      * @param page     页码，默认第 1 页
      * @param pageSize 每页条数，默认 10 条
+     * @param title    书名关键词（可选，模糊匹配）
+     * @param username 用户名关键词（可选，模糊匹配；普通用户忽略此参数）
      * @return 借阅记录分页结果
      */
     @GetMapping
     public Result<PageResult<BorrowRecord>> getRecords(@AuthenticationPrincipal UserPrincipal user,
                                                         @RequestParam(defaultValue = "1") int page,
-                                                        @RequestParam(defaultValue = "10") int pageSize) {
+                                                        @RequestParam(defaultValue = "10") int pageSize,
+                                                        @RequestParam(required = false) String title,
+                                                        @RequestParam(required = false) String username) {
         PageResult<BorrowRecord> records;
         if ("admin".equals(user.getRole())) {
-            // 管理员可以查看所有借阅记录
-            records = borrowService.findAll(page, pageSize);
+            // 管理员可以查看所有借阅记录，并按书名/用户名筛选
+            records = borrowService.findAll(title, username, page, pageSize);
         } else {
-            // 普通用户只能查看自己的借阅记录
-            records = borrowService.findByUserId(user.getId(), page, pageSize);
+            // 普通用户只能查看自己的借阅记录，忽略用户名筛选条件
+            records = borrowService.findByUserId(user.getId(), title, null, page, pageSize);
         }
         return Result.success(records);
     }

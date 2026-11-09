@@ -15,10 +15,10 @@ import java.util.Map;
 public interface BorrowService {
     /** 借阅图书（用户借书） */
     BorrowRecord borrow(Long userId, Long bookId);
-    /** 按用户 ID 分页查询借阅记录（普通用户使用） */
-    PageResult<BorrowRecord> findByUserId(Long userId, int page, int pageSize);
-    /** 分页查询所有借阅记录（管理员使用） */
-    PageResult<BorrowRecord> findAll(int page, int pageSize);
+    /** 按用户 ID 分页查询借阅记录（普通用户使用，支持书名/用户名筛选） */
+    PageResult<BorrowRecord> findByUserId(Long userId, String title, String username, int page, int pageSize);
+    /** 分页查询所有借阅记录（管理员使用，支持书名/用户名筛选） */
+    PageResult<BorrowRecord> findAll(String title, String username, int page, int pageSize);
     /** 归还图书（校验操作者身份：管理员可归还任意记录，普通用户只能归还自己的） */
     void returnBook(Long operatorId, boolean isAdmin, Long recordId);
     /** 获取系统统计数据（图书总数、用户总数、借阅总数等） */
